@@ -18,3 +18,4 @@
 - 2026-07-08 21:45 : Configure CORS and API routes
 - 2026-07-08 22:08 : Add repository cloning manager
 - 2026-07-08 22:27 : Implement file walking and filtering
+- 2026-07-08 22:36 : Add risk calculation logic
