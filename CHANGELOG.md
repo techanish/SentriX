@@ -5,3 +5,4 @@
 - 2026-07-08 10:45 : Setup Next.js frontend boilerplate
 - 2026-07-08 10:49 : Initialize Python backend environment
 - 2026-07-08 11:39 : Configure Tailwind and global CSS
+- 2026-07-08 12:30 : Implement Three.js background animation
