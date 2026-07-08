@@ -9,3 +9,4 @@
 - 2026-07-08 12:34 : Add basic UI components (Navbar, Header)
 - 2026-07-08 14:01 : Create Terminal UI layout
 - 2026-07-08 15:06 : Implement PlannerAgent base class
+- 2026-07-08 15:13 : Add SecretAgent with regex patterns
