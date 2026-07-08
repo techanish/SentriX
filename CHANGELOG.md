@@ -21,3 +21,4 @@
 - 2026-07-08 22:36 : Add risk calculation logic
 - 2026-07-08 22:47 : Implement vulnerability severity mapping
 - 2026-07-09 00:14 : Create Dashboard grid layout
+- 2026-07-09 01:46 : Add VulnerabilityExplorer component
