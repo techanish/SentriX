@@ -19,3 +19,4 @@
 - 2026-07-08 22:08 : Add repository cloning manager
 - 2026-07-08 22:27 : Implement file walking and filtering
 - 2026-07-08 22:36 : Add risk calculation logic
+- 2026-07-08 22:47 : Implement vulnerability severity mapping
