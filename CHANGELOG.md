@@ -36,3 +36,4 @@
 - 2026-07-09 14:04 : Update risk score visual indicators
 - 2026-07-09 14:16 : Fix layout overflow issues in explorer
 - 2026-07-09 14:47 : Add support for package.json scanning
+- 2026-07-09 15:30 : Add support for requirements.txt scanning
