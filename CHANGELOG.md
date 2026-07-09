@@ -46,3 +46,4 @@
 - 2026-07-09 21:15 : Implement delta decorations for Monaco
 - 2026-07-09 21:20 : Add file tree navigation to explorer
 - 2026-07-09 21:35 : Fix scrolling issue in code viewer
+- 2026-07-09 21:41 : Update agent prompt logic
