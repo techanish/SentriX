@@ -51,3 +51,4 @@
 - 2026-07-09 21:51 : Fix promise rejection in terminal animation
 - 2026-07-09 22:04 : Add robust error boundaries
 - 2026-07-09 22:36 : Implement basic logging in backend
+- 2026-07-09 22:48 : Configure WSGI server for production
