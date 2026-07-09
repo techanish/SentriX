@@ -45,3 +45,4 @@
 - 2026-07-09 20:40 : Add dark mode optimizations
 - 2026-07-09 21:15 : Implement delta decorations for Monaco
 - 2026-07-09 21:20 : Add file tree navigation to explorer
+- 2026-07-09 21:35 : Fix scrolling issue in code viewer
