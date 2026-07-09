@@ -39,3 +39,4 @@
 - 2026-07-09 15:30 : Add support for requirements.txt scanning
 - 2026-07-09 15:47 : Implement line number mapping for frontend
 - 2026-07-09 17:37 : Refine prompt for Gemini code analysis
+- 2026-07-09 17:45 : Add caching for cloned repositories
