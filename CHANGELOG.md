@@ -32,3 +32,4 @@
 - 2026-07-09 09:47 : Improve regex secret patterns
 - 2026-07-09 10:37 : Add support for JS/TS in CodeReviewAgent
 - 2026-07-09 11:43 : Implement parallel processing for agents
+- 2026-07-09 11:59 : Add mock fallback when Gemini API key is missing
