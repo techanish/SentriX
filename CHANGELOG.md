@@ -34,3 +34,4 @@
 - 2026-07-09 11:43 : Implement parallel processing for agents
 - 2026-07-09 11:59 : Add mock fallback when Gemini API key is missing
 - 2026-07-09 14:04 : Update risk score visual indicators
+- 2026-07-09 14:16 : Fix layout overflow issues in explorer
