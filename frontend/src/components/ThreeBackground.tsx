@@ -4,7 +4,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 
 function RotatingGlobe() {
-  const globeRef = useRef<any>();
+  const globeRef = useRef<any>(null);
   useFrame((_, delta) => {
     if (globeRef.current) {
       globeRef.current.rotation.y += delta * 0.1;
