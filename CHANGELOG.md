@@ -31,3 +31,4 @@
 - 2026-07-09 08:53 : Fix Monaco editor unhandled rejections
 - 2026-07-09 09:47 : Improve regex secret patterns
 - 2026-07-09 10:37 : Add support for JS/TS in CodeReviewAgent
+- 2026-07-09 11:43 : Implement parallel processing for agents
