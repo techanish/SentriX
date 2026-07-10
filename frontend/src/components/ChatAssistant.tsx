@@ -11,15 +11,32 @@ export function ChatAssistant() {
   ]);
   const [input, setInput] = useState("");
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
-    setMessages(prev => [...prev, { role: "user", content: input }]);
+    const userMessage = { role: "user", content: input };
+    setMessages(prev => [...prev, userMessage]);
     setInput("");
     
-    // Mock response
-    setTimeout(() => {
-      setMessages(prev => [...prev, { role: "assistant", content: "I'm currently running in offline mock mode, but once connected to Vertex AI, I will provide a detailed technical explanation with code examples!" }]);
-    }, 1000);
+    // Add loading state
+    const loadingId = Date.now();
+    setMessages(prev => [...prev, { id: loadingId, role: "assistant", content: "Scraping nodes..." }]);
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input })
+      });
+      const data = await res.json();
+      
+      setMessages(prev => prev.map(msg => 
+        (msg as any).id === loadingId ? { role: "assistant", content: data.response || data.error } : msg
+      ));
+    } catch (e) {
+      setMessages(prev => prev.map(msg => 
+        (msg as any).id === loadingId ? { role: "assistant", content: "ERROR: Failed to connect to proxy." } : msg
+      ));
+    }
   };
 
   return (

@@ -1,0 +1,39 @@
+import os
+import logging
+from pymongo import MongoClient
+from pymongo.errors import ConnectionFailure
+
+logger = logging.getLogger(__name__)
+
+# Fallback string provided by the user for development.
+# In production on Vercel, this should be set in the environment.
+DEFAULT_URI = "mongodb://localhost:27017"
+
+class Database:
+    def __init__(self):
+        self.client = None
+        self.db = None
+        self.scans = None
+        self.chat_logs = None
+
+    def connect(self):
+        uri = os.environ.get("MONGODB_URI", DEFAULT_URI)
+        try:
+            self.client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+            # Verify connection
+            self.client.admin.command('ping')
+            
+            self.db = self.client.get_database("sentrix_db")
+            self.scans = self.db.get_collection("scans")
+            self.chat_logs = self.db.get_collection("chat_logs")
+            logger.info("Successfully connected to MongoDB.")
+        except Exception as e:
+            logger.error(f"Failed to connect to MongoDB: {e}")
+            self.client = None
+
+db_instance = Database()
+
+def get_db():
+    if not db_instance.client:
+        db_instance.connect()
+    return db_instance

@@ -4,3 +4,5 @@ celery
 redis
 python-dotenv
 google-genai
+pymongo
+duckduckgo-search

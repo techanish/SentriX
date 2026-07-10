@@ -3,6 +3,8 @@ import logging
 from flask import Blueprint, jsonify, request
 from agents.specialized import get_agent_by_name
 from core.repo import RepositoryManager
+from core.db import get_db
+from duckduckgo_search import DDGS
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +130,7 @@ def start_scan():
         for v in f["vulnerabilities"]:
             severity_counts[v["severity"]] = severity_counts.get(v["severity"], 0) + 1
 
-    return jsonify({
+    scan_result = {
         "message": "Scan complete",
         "repo": repo_url,
         "summary": {
@@ -138,7 +140,18 @@ def start_scan():
             "agents_run": agent_results
         },
         "files": files_list
-    })
+    }
+
+    # Save to MongoDB
+    db = get_db()
+    if db.scans is not None:
+        try:
+            db.scans.insert_one(scan_result.copy())
+            logger.info("Saved scan results to MongoDB.")
+        except Exception as e:
+            logger.error(f"Failed to save scan to MongoDB: {e}")
+
+    return jsonify(scan_result)
 
 
 @api_bp.route("/chat", methods=["POST"])
@@ -148,6 +161,27 @@ def chat():
     if not message:
         return jsonify({"error": "message is required"}), 400
         
-    return jsonify({
-        "response": f"I received your message: '{message}'. How can I assist with your security posture today?"
-    })
+    logger.info(f"Rogue Chat proxy initiated for query: {message}")
+    
+    try:
+        # We use duckduckgo-search to proxy our AI request without an API key
+        # by searching the open web for the query and scraping the results
+        search_results = DDGS().text(message, max_results=3)
+        if search_results:
+            scraped_intel = "\n\n".join([f"> [NODE FRAGMENT]: {r['body']}" for r in search_results])
+            response_text = f"My rogue proxy scraped the following intel off public nodes:\n\n{scraped_intel}\n\nWhat's our next move?"
+        else:
+            response_text = "I couldn't extract any intel on that. The search nodes came up completely dark."
+    except Exception as e:
+        logger.error(f"Rogue proxy failed: {e}")
+        response_text = "ERROR: Failed to proxy the request. The nodes might be blocking our scraping."
+
+    # Persist the chat log
+    db = get_db()
+    if db.chat_logs is not None:
+        try:
+            db.chat_logs.insert_one({"message": message, "response": response_text})
+        except Exception as e:
+            logger.error(f"Failed to log chat to MongoDB: {e}")
+
+    return jsonify({"response": response_text})
