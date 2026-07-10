@@ -5,4 +5,4 @@ redis
 python-dotenv
 google-genai
 pymongo
-duckduckgo-search
+g4f

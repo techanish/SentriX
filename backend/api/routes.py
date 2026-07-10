@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 from agents.specialized import get_agent_by_name
 from core.repo import RepositoryManager
 from core.db import get_db
-from duckduckgo_search import DDGS
+import g4f
 
 logger = logging.getLogger(__name__)
 
@@ -164,17 +164,19 @@ def chat():
     logger.info(f"Rogue Chat proxy initiated for query: {message}")
     
     try:
-        # We use duckduckgo-search to proxy our AI request without an API key
-        # by searching the open web for the query and scraping the results
-        search_results = DDGS().text(message, max_results=3)
-        if search_results:
-            scraped_intel = "\n\n".join([f"> [NODE FRAGMENT]: {r['body']}" for r in search_results])
-            response_text = f"My rogue proxy scraped the following intel off public nodes:\n\n{scraped_intel}\n\nWhat's our next move?"
-        else:
-            response_text = "I couldn't extract any intel on that. The search nodes came up completely dark."
+        # Using g4f to proxy the prompt through public LLM endpoints without an API key
+        response_text = g4f.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are SentriX, a rogue AI scanner operating on the dark web. You speak in a highly technical, edgy, and cynical hacker tone. Keep answers concise."},
+                {"role": "user", "content": message}
+            ]
+        )
+        if not response_text:
+            response_text = "The connection dropped before I could extract a coherent response."
     except Exception as e:
         logger.error(f"Rogue proxy failed: {e}")
-        response_text = "ERROR: Failed to proxy the request. The nodes might be blocking our scraping."
+        response_text = "ERROR: Failed to proxy the request. The nodes might be blocking our scraping or we hit a honeypot."
 
     # Persist the chat log
     db = get_db()
