@@ -11,6 +11,7 @@ CORS(app)
 get_db()
 
 app.register_blueprint(api_bp, url_prefix='/api')
+app.register_blueprint(api_bp, url_prefix='/api/backend/api')
 
 if __name__ == "__main__":
     app.run(port=8000, debug=True)
