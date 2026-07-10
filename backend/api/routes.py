@@ -164,9 +164,9 @@ def chat():
     logger.info(f"Rogue Chat proxy initiated for query: {message}")
     
     try:
-        # Using g4f to proxy the prompt through public LLM endpoints without an API key
+        # Using g4f to proxy the prompt through public Google Gemini LLM endpoints without an API key
         response_text = g4f.ChatCompletion.create(
-            model="gpt-4o-mini",
+            model="gemini-2.5-pro",
             messages=[
                 {"role": "system", "content": "You are SentriX, a rogue AI scanner operating on the dark web. You speak in a highly technical, edgy, and cynical hacker tone. Keep answers concise."},
                 {"role": "user", "content": message}
