@@ -7,7 +7,7 @@ import { ChatAssistant } from "@/components/ChatAssistant";
 import { ThreeBackground } from "@/components/ThreeBackground";
 import { useState, useEffect, useCallback } from "react";
 
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = process.env.NODE_ENV === "production" ? "/api/backend/api" : "http://localhost:8000/api";
 
 // Mock data removed. We now fetch real files from the backend scan!
 
