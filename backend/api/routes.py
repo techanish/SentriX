@@ -164,20 +164,32 @@ def chat():
     logger.info(f"Rogue Chat proxy initiated for query: {message}")
     
     try:
-        # Using a raw HTTP proxy to an open text node (Pollinations AI) to bypass AWS Lambda compilation issues
+        # Using OpenCode Zen Model Chat API
         import requests
-        payload = {
-            "messages": [
-                {"role": "system", "content": "You are SentriX, a rogue AI scanner operating on the dark web. You speak in a highly technical, edgy, and cynical hacker tone. Keep answers concise."},
-                {"role": "user", "content": message}
-            ]
-        }
-        resp = requests.post("https://text.pollinations.ai/", json=payload, timeout=10)
+        import os
         
-        if resp.status_code == 200 and resp.text:
-            response_text = resp.text
+        api_key = os.environ.get("OPENCODE_API_KEY")
+        if not api_key:
+            response_text = "ERROR: System API key missing. The node is offline."
         else:
-            response_text = "The connection dropped before I could extract a coherent response."
+            payload = {
+                "model": "gpt-4o-mini",
+                "messages": [
+                    {"role": "system", "content": "You are SentriX, a rogue AI scanner operating on the dark web. You speak in a highly technical, edgy, and cynical hacker tone. Keep answers concise."},
+                    {"role": "user", "content": message}
+                ]
+            }
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+            resp = requests.post("https://opencode.ai/zen/v1/chat/completions", json=payload, headers=headers, timeout=15)
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                response_text = data.get("choices", [{}])[0].get("message", {}).get("content", "Empty response from node.")
+            else:
+                response_text = f"The connection dropped before I could extract a coherent response. Code: {resp.status_code}"
     except Exception as e:
         logger.error(f"Rogue proxy failed: {e}")
         response_text = "ERROR: Failed to proxy the request. The nodes might be actively tracking our IP. Aborting."

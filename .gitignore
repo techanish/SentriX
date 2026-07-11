@@ -4,3 +4,5 @@ generate_history.py
 check_secrets.py
 generate_history.py
 check_secrets.py
+
+.env
