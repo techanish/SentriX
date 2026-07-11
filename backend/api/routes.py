@@ -164,30 +164,25 @@ def chat():
     logger.info(f"Rogue Chat proxy initiated for query: {message}")
     
     try:
-        # Using OpenCode Zen Model Chat API
+        # Using Google Gemini API (AI Studio)
         import requests
         import os
         
-        api_key = os.environ.get("OPENCODE_API_KEY")
+        api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key:
             response_text = "ERROR: System API key missing. The node is offline."
         else:
             payload = {
-                "model": "gemini-3-flash",
-                "messages": [
-                    {"role": "system", "content": "You are Project SentriX, an advanced AI assistant. You speak politely, respectfully, and professionally. Keep answers helpful and concise."},
-                    {"role": "user", "content": message}
-                ]
+                "contents": [{"role": "user", "parts": [{"text": message}]}],
+                "systemInstruction": {"parts": [{"text": "You are Project SentriX, an advanced AI assistant. You speak politely, respectfully, and professionally. Keep answers helpful and concise."}]}
             }
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            }
-            resp = requests.post("https://opencode.ai/zen/v1/chat/completions", json=payload, headers=headers, timeout=15)
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={api_key}"
+            headers = {"Content-Type": "application/json"}
+            resp = requests.post(url, json=payload, headers=headers, timeout=15)
             
             if resp.status_code == 200:
                 data = resp.json()
-                response_text = data.get("choices", [{}])[0].get("message", {}).get("content", "Empty response from node.")
+                response_text = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "Empty response from node.")
             else:
                 response_text = f"The connection dropped before I could extract a coherent response. Code: {resp.status_code}"
     except Exception as e:
