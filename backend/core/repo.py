@@ -18,34 +18,41 @@ class RepositoryManager:
         
     def clone_repo(self, repo_url: str) -> str:
         """
-        Clones a git repository to a temporary local directory.
-        Returns the path to the cloned repository.
+        Downloads a git repository as a zipball to a temporary local directory.
+        Bypasses the need for 'git' binary on Vercel.
         """
-        # Create a unique folder name based on the repo URL (crude but effective for MVP)
-        repo_name = repo_url.rstrip("/").split("/")[-1]
-        if repo_name.endswith(".git"):
-            repo_name = repo_name[:-4]
+        import requests, zipfile, io, uuid
+        
+        repo_url = repo_url.rstrip("/")
+        if repo_url.endswith(".git"):
+            repo_url = repo_url[:-4]
             
-        # Add a random suffix to avoid collisions
-        import uuid
+        parts = repo_url.split("/")
+        if len(parts) >= 2:
+            owner, repo_name = parts[-2], parts[-1]
+        else:
+            raise ValueError("Invalid GitHub URL provided.")
+            
         unique_id = str(uuid.uuid4())[:8]
         target_path = os.path.join(self.base_dir, f"{repo_name}_{unique_id}")
         
-        logger.info(f"Cloning {repo_url} into {target_path}")
+        logger.info(f"Downloading {repo_url} into {target_path}")
         
         try:
-            # Using subprocess to call git clone directly
-            result = subprocess.run(
-                ["git", "clone", "--depth", "1", repo_url, target_path],
-                check=True,
-                capture_output=True,
-                text=True
-            )
-            logger.info("Repository cloned successfully.")
+            # Using the GitHub API to get the zipball of the default branch
+            zip_url = f"https://api.github.com/repos/{owner}/{repo_name}/zipball"
+            response = requests.get(zip_url, allow_redirects=True, timeout=15)
+            response.raise_for_status()
+            
+            os.makedirs(target_path, exist_ok=True)
+            with zipfile.ZipFile(io.BytesIO(response.content)) as z:
+                z.extractall(target_path)
+                
+            logger.info("Repository downloaded and extracted successfully.")
             return target_path
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to clone repository: {e.stderr}")
-            raise Exception(f"Failed to clone repository: {e.stderr}")
+        except Exception as e:
+            logger.error(f"Failed to download repository: {e}")
+            raise RuntimeError(f"Failed to fetch repository. {e}")
 
     def cleanup(self, path: str):
         """
