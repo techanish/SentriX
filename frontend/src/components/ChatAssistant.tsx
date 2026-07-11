@@ -4,6 +4,14 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, Send, X, Bot, User } from "lucide-react";
 
+const TypingIndicator = () => (
+  <div className="flex gap-1 items-center h-4 px-2">
+    <motion.div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" animate={{ y: [0, -3, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0 }} />
+    <motion.div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" animate={{ y: [0, -3, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }} />
+    <motion.div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" animate={{ y: [0, -3, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }} />
+  </div>
+);
+
 export function ChatAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -19,7 +27,7 @@ export function ChatAssistant() {
     
     // Add loading state
     const loadingId = Date.now();
-    setMessages(prev => [...prev, { id: loadingId, role: "assistant", content: "Scraping nodes..." }]);
+    setMessages(prev => [...prev, { id: loadingId, role: "assistant", content: "..." }]);
 
     try {
       const apiBase = process.env.NODE_ENV === "production" ? "/api/backend/api" : "http://127.0.0.1:8000/api";
@@ -74,7 +82,7 @@ export function ChatAssistant() {
                     {msg.role === "assistant" ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
                   </div>
                   <div className={`p-3 rounded-lg text-sm max-w-[80%] ${msg.role === "assistant" ? "bg-neutral-800 text-neutral-200" : "bg-emerald-600 text-white"}`}>
-                    {msg.content}
+                    {msg.content === "..." ? <TypingIndicator /> : msg.content}
                   </div>
                 </div>
               ))}
