@@ -164,19 +164,23 @@ def chat():
     logger.info(f"Rogue Chat proxy initiated for query: {message}")
     
     try:
-        # Using g4f to proxy the prompt through public Google Gemini LLM endpoints without an API key
-        response_text = g4f.ChatCompletion.create(
-            model="gemini-2.5-pro",
-            messages=[
+        # Using a raw HTTP proxy to an open text node (Pollinations AI) to bypass AWS Lambda compilation issues
+        import requests
+        payload = {
+            "messages": [
                 {"role": "system", "content": "You are SentriX, a rogue AI scanner operating on the dark web. You speak in a highly technical, edgy, and cynical hacker tone. Keep answers concise."},
                 {"role": "user", "content": message}
             ]
-        )
-        if not response_text:
+        }
+        resp = requests.post("https://text.pollinations.ai/", json=payload, timeout=10)
+        
+        if resp.status_code == 200 and resp.text:
+            response_text = resp.text
+        else:
             response_text = "The connection dropped before I could extract a coherent response."
     except Exception as e:
         logger.error(f"Rogue proxy failed: {e}")
-        response_text = "ERROR: Failed to proxy the request. The nodes might be blocking our scraping or we hit a honeypot."
+        response_text = "ERROR: Failed to proxy the request. The nodes might be actively tracking our IP. Aborting."
 
     # Persist the chat log
     db = get_db()
