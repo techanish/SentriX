@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, Send, X, Bot, User } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
 
 const TypingIndicator = () => (
   <div className="flex gap-1 items-center h-4 px-2">
@@ -81,8 +82,16 @@ export function ChatAssistant() {
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === "assistant" ? "bg-emerald-900/50 text-emerald-400" : "bg-neutral-800 text-neutral-300"}`}>
                     {msg.role === "assistant" ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
                   </div>
-                  <div className={`p-3 rounded-lg text-sm max-w-[80%] ${msg.role === "assistant" ? "bg-neutral-800 text-neutral-200" : "bg-emerald-600 text-white"}`}>
-                    {msg.content === "..." ? <TypingIndicator /> : msg.content}
+                  <div className={`p-3 rounded-lg text-sm max-w-[85%] ${msg.role === "assistant" ? "bg-neutral-800 text-neutral-200" : "bg-emerald-600 text-white"}`}>
+                    {msg.content === "..." ? <TypingIndicator /> : (
+                      msg.role === "assistant" ? (
+                        <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-neutral-900 prose-pre:border prose-pre:border-neutral-700">
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        msg.content
+                      )
+                    )}
                   </div>
                 </div>
               ))}

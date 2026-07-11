@@ -1,5 +1,5 @@
 @import "tailwindcss";
-
+@plugin "@tailwindcss/typography";
 @theme {
   --font-sans: "Inter", var(--font-geist-sans);
   --font-mono: "JetBrains Mono", var(--font-geist-mono);
