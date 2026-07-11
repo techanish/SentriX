@@ -173,7 +173,7 @@ def chat():
             response_text = "ERROR: System API key missing. The node is offline."
         else:
             payload = {
-                "model": "deepseek-v4-flash-free",
+                "model": "gemini-3-flash",
                 "messages": [
                     {"role": "system", "content": "You are Project SentriX, an advanced AI assistant. You speak politely, respectfully, and professionally. Keep answers helpful and concise."},
                     {"role": "user", "content": message}
