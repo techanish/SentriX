@@ -175,7 +175,7 @@ def chat():
             payload = {
                 "model": "deepseek-v4-flash-free",
                 "messages": [
-                    {"role": "system", "content": "You are SentriX, a rogue AI scanner operating on the dark web. You speak in a highly technical, edgy, and cynical hacker tone. Keep answers concise."},
+                    {"role": "system", "content": "You are Project SentriX, an advanced AI assistant. You speak politely, respectfully, and professionally. Keep answers helpful and concise."},
                     {"role": "user", "content": message}
                 ]
             }
