@@ -1,11 +1,51 @@
 "use client";
 
-import { Settings, Key, Bell, Shield, Terminal } from "lucide-react";
+import { Settings, Key, Bell, Shield, Terminal, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
+
+const API_BASE = process.env.NODE_ENV === "production" ? "/api/backend/api" : "http://localhost:8000/api";
 
 export default function SettingsPage() {
+  const { data: session } = useSession();
   const [apiKey, setApiKey] = useState("");
+  const [isDeletingData, setIsDeletingData] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+  const handleDeleteData = async () => {
+    if (!session?.user?.email || !confirm("Are you sure you want to delete all 10 scan reports? This cannot be undone.")) return;
+    setIsDeletingData(true);
+    try {
+      await fetch(`${API_BASE}/settings/data`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_email: session.user.email })
+      });
+      alert("All scan reports have been deleted.");
+    } catch (e) {
+      console.error(e);
+      alert("Failed to delete data.");
+    }
+    setIsDeletingData(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!session?.user?.email || !confirm("Are you sure you want to completely delete your account and all data? You will be logged out immediately.")) return;
+    setIsDeletingAccount(true);
+    try {
+      await fetch(`${API_BASE}/settings/account`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_email: session.user.email })
+      });
+      signOut({ callbackUrl: "/login" });
+    } catch (e) {
+      console.error(e);
+      alert("Failed to delete account.");
+      setIsDeletingAccount(false);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-8 py-16">
@@ -18,6 +58,11 @@ export default function SettingsPage() {
           <p className="text-neutral-500 dark:text-neutral-400 text-lg">
             Configure your SentriX local environment, manage API keys, and adjust scanning parameters.
           </p>
+          {session?.user && (
+            <div className="mt-4 inline-block px-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm text-neutral-400">
+              Authenticated as: <span className="text-white font-bold">{session.user.email}</span>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
@@ -65,14 +110,40 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="canvas-card p-6 rounded-2xl space-y-4 border-l-4 border-l-rose-500">
+            <div className="canvas-card p-6 rounded-2xl space-y-6 border-l-4 border-l-rose-500">
               <h3 className="text-xl font-bold text-rose-500">Danger Zone</h3>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                Clear all locally cached vulnerability reports and reset the SentriX scanner configuration.
-              </p>
-              <button className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg text-sm font-bold transition-colors">
-                Purge Local Data
-              </button>
+              
+              <div className="space-y-2">
+                <h4 className="font-bold">Purge Scan History</h4>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                  Clear all 10 saved vulnerability reports from the backend storage container to free up space.
+                </p>
+                <button 
+                  onClick={handleDeleteData}
+                  disabled={isDeletingData || !session}
+                  className="px-4 py-2 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-500 rounded-lg text-sm font-bold transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isDeletingData ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  Delete Data
+                </button>
+              </div>
+
+              <div className="w-full h-px bg-white/10" />
+
+              <div className="space-y-2">
+                <h4 className="font-bold">Delete Account</h4>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                  Permanently wipe your account, settings, and all associated scan clusters from the SentriX DB.
+                </p>
+                <button 
+                  onClick={handleDeleteAccount}
+                  disabled={isDeletingAccount || !session}
+                  className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isDeletingAccount ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  Delete Account
+                </button>
+              </div>
             </div>
           </div>
         </div>
