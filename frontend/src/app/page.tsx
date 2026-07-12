@@ -6,7 +6,7 @@ import { VulnerabilityExplorer, type VulnerabilityFile } from "@/components/Vuln
 import { ChatAssistant } from "@/components/ChatAssistant";
 import { ThreeBackground } from "@/components/ThreeBackground";
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useUser } from "@clerk/nextjs";
 
 const API_BASE = process.env.NODE_ENV === "production" ? "/api/backend/api" : "http://localhost:8000/api";
 
@@ -40,8 +40,9 @@ export default function PremiumDashboard() {
   const [terminalSteps, setTerminalSteps] = useState<TerminalStep[]>([]);
   const [repoName, setRepoName] = useState("waiting-for-target");
 
-  // NextAuth Session
-  const { data: session } = useSession();
+  // Clerk User
+  const { user, isLoaded } = useUser();
+  const email = user?.primaryEmailAddress?.emailAddress;
   
   // History Sidebar & Limits
   const [showHistory, setShowHistory] = useState(false);
@@ -50,15 +51,15 @@ export default function PremiumDashboard() {
 
   // Fetch History on Mount
   useEffect(() => {
-    if (session?.user?.email) {
-      fetch(`${API_BASE}/history?user_email=${encodeURIComponent(session.user.email)}`)
+    if (email) {
+      fetch(`${API_BASE}/history?user_email=${encodeURIComponent(email)}`)
         .then(res => res.json())
         .then(data => {
           if (data.history) setHistory(data.history);
         })
         .catch(err => console.error("Failed to fetch history:", err));
     }
-  }, [session]);
+  }, [email]);
 
   // Prevent hydration mismatch from browser extensions (Bitdefender, Grammarly, etc.)
   useEffect(() => { 
@@ -124,7 +125,7 @@ export default function PremiumDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           repo_url: repoUrl.trim(),
-          user_email: session?.user?.email // Pass the logged-in user to the backend
+          user_email: email // Pass the logged-in user to the backend
         }),
       }).then(async (res) => {
         if (!res.ok) {

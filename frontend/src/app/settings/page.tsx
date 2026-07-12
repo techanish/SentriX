@@ -3,24 +3,30 @@
 import { Settings, Key, Bell, Shield, Terminal, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useUser, useClerk } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 const API_BASE = process.env.NODE_ENV === "production" ? "/api/backend/api" : "http://localhost:8000/api";
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const { user, isLoaded } = useUser();
+  const { signOut } = useClerk();
+  const router = useRouter();
+  
   const [apiKey, setApiKey] = useState("");
   const [isDeletingData, setIsDeletingData] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
+  const email = user?.primaryEmailAddress?.emailAddress;
+
   const handleDeleteData = async () => {
-    if (!session?.user?.email || !confirm("Are you sure you want to delete all 10 scan reports? This cannot be undone.")) return;
+    if (!email || !confirm("Are you sure you want to delete all 10 scan reports? This cannot be undone.")) return;
     setIsDeletingData(true);
     try {
       await fetch(`${API_BASE}/settings/data`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_email: session.user.email })
+        body: JSON.stringify({ user_email: email })
       });
       alert("All scan reports have been deleted.");
     } catch (e) {
@@ -31,15 +37,16 @@ export default function SettingsPage() {
   };
 
   const handleDeleteAccount = async () => {
-    if (!session?.user?.email || !confirm("Are you sure you want to completely delete your account and all data? You will be logged out immediately.")) return;
+    if (!email || !confirm("Are you sure you want to completely delete your account and all data? You will be logged out immediately.")) return;
     setIsDeletingAccount(true);
     try {
       await fetch(`${API_BASE}/settings/account`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_email: session.user.email })
+        body: JSON.stringify({ user_email: email })
       });
-      signOut({ callbackUrl: "/login" });
+      await signOut();
+      router.push("/");
     } catch (e) {
       console.error(e);
       alert("Failed to delete account.");
@@ -58,9 +65,9 @@ export default function SettingsPage() {
           <p className="text-neutral-500 dark:text-neutral-400 text-lg">
             Configure your SentriX local environment, manage API keys, and adjust scanning parameters.
           </p>
-          {session?.user && (
+          {isLoaded && user && (
             <div className="mt-4 inline-block px-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm text-neutral-400">
-              Authenticated as: <span className="text-white font-bold">{session.user.email}</span>
+              Authenticated as: <span className="text-white font-bold">{email}</span>
             </div>
           )}
         </div>
