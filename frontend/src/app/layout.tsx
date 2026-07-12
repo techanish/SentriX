@@ -24,30 +24,7 @@ const clerkAppearance = {
   baseTheme: dark,
   variables: {
     colorPrimary: "#10b981",
-    colorBackground: "#0a0a0a",
-    colorInputBackground: "#111111",
-    colorInputText: "#e8e8e8",
-    colorText: "#e8e8e8",
-    colorTextSecondary: "#737373",
-    borderRadius: "0.75rem",
-    fontFamily: "var(--font-geist-sans), Inter, system-ui, sans-serif",
-    fontSize: "0.875rem",
-  },
-  elements: {
-    card: "bg-[#0a0a0a] border border-white/10 shadow-2xl backdrop-blur-xl",
-    headerTitle: "text-white font-black tracking-tight",
-    headerSubtitle: "text-neutral-500",
-    socialButtonsBlockButton: "bg-white/5 border-white/10 hover:bg-white/10 text-white",
-    socialButtonsBlockButtonText: "text-white font-medium",
-    formButtonPrimary: "bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-900/30",
-    footerActionLink: "text-emerald-500 hover:text-emerald-400 font-medium",
-    formFieldInput: "bg-[#111] border-white/10 text-white focus:border-emerald-500 focus:ring-emerald-500/20",
-    formFieldLabel: "text-neutral-400 font-medium",
-    dividerLine: "bg-white/10",
-    dividerText: "text-neutral-600",
-    identityPreviewEditButton: "text-emerald-500",
-    userButtonPopoverFooter: "hidden",
-  },
+  }
 };
 
 export default function RootLayout({

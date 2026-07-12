@@ -33,8 +33,7 @@ export default function PremiumDashboard() {
   const [scanError, setScanError] = useState("");
   const [findings, setFindings] = useState<Finding[]>([]);
   const [scanFiles, setScanFiles] = useState<VulnerabilityFile[]>([]);
-  const [riskScore, setRiskScore] = useState("—");
-  const [riskLabel, setRiskLabel] = useState("");
+  const [riskState, setRiskState] = useState({ score: "—", label: "", text: "text-neutral-500", border: "border-neutral-500/20", bg: "bg-neutral-900/30 border-neutral-800" });
   const [terminalSteps, setTerminalSteps] = useState<TerminalStep[]>([]);
   const [repoName, setRepoName] = useState("waiting-for-target");
 
@@ -76,14 +75,14 @@ export default function PremiumDashboard() {
     } catch { return "repo"; }
   };
 
-  const calculateRisk = (findings: Finding[]): { score: string; label: string; color: string } => {
+  const calculateRisk = (findings: Finding[]) => {
     const critical = findings.filter(f => f.severity === "CRITICAL").length;
     const high = findings.filter(f => f.severity === "HIGH").length;
-    if (critical >= 3) return { score: "F", label: "Extremely High Risk", color: "text-rose-500" };
-    if (critical >= 1) return { score: "D+", label: "High Risk Profile", color: "text-rose-500" };
-    if (high >= 3) return { score: "C", label: "Elevated Risk", color: "text-amber-500" };
-    if (high >= 1) return { score: "B-", label: "Moderate Risk", color: "text-amber-400" };
-    return { score: "A", label: "Low Risk", color: "text-emerald-500" };
+    if (critical >= 3) return { score: "F", label: "Extremely High Risk", text: "text-rose-500", border: "border-rose-500/30", bg: "bg-rose-950/30 border-rose-900/40" };
+    if (critical >= 1) return { score: "D+", label: "High Risk Profile", text: "text-rose-500", border: "border-rose-500/30", bg: "bg-rose-950/30 border-rose-900/40" };
+    if (high >= 3) return { score: "C", label: "Elevated Risk", text: "text-amber-500", border: "border-amber-500/30", bg: "bg-amber-950/30 border-amber-900/40" };
+    if (high >= 1) return { score: "B-", label: "Moderate Risk", text: "text-amber-400", border: "border-amber-400/30", bg: "bg-amber-950/30 border-amber-900/40" };
+    return { score: "A", label: "Low Risk", text: "text-emerald-500", border: "border-emerald-500/30", bg: "bg-emerald-950/30 border-emerald-900/40" };
   };
 
   const handleScan = useCallback(async (e: React.FormEvent) => {
@@ -100,8 +99,7 @@ export default function PremiumDashboard() {
     setScanError("");
     setFindings([]);
     setScanFiles([]);
-    setRiskScore("-");
-    setRiskLabel("");
+    setRiskState({ score: "-", label: "", text: "text-neutral-500", border: "border-neutral-500/20", bg: "bg-neutral-900/30 border-neutral-800" });
     const name = getRepoName(repoUrl);
     setRepoName(name);
 
@@ -184,9 +182,7 @@ export default function PremiumDashboard() {
 
       setScanFiles(files);
       setFindings(scanFindings);
-      const risk = calculateRisk(scanFindings);
-      setRiskScore(risk.score);
-      setRiskLabel(risk.label);
+      setRiskState(calculateRisk(scanFindings));
       setScanStatus("done");
 
     } catch (err: any) {
@@ -443,23 +439,23 @@ export default function PremiumDashboard() {
             <div className="canvas-card rounded-2xl p-6 flex flex-col items-center justify-center text-center">
               <div className="text-[10px] font-bold tracking-[0.2em] text-neutral-600 uppercase mb-4">Risk Score</div>
               <div className="relative">
-                <div className="text-7xl font-black">
+                <div className={`text-7xl font-black ${scanStatus === "done" ? riskState.text : "text-neutral-500"}`}>
                   {scanStatus === "scanning" ? (
                     <Loader2 className="w-16 h-16 animate-spin text-neutral-700 mx-auto" />
-                  ) : riskScore}
+                  ) : riskState.score}
                 </div>
                 {scanStatus === "done" && (
-                  <div className="absolute -inset-4 rounded-full border-2 border-emerald-500/20 animate-pulse-glow" />
+                  <div className={`absolute -inset-4 rounded-full border-2 ${riskState.border} animate-pulse-glow`} />
                 )}
               </div>
               <AnimatePresence>
-                {scanStatus === "done" && riskLabel && (
+                {scanStatus === "done" && riskState.label && (
                   <motion.p
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="text-xs text-rose-400 font-bold mt-4 bg-rose-950/30 px-3 py-1 rounded-full border border-rose-900/30"
+                    className={`text-xs ${riskState.text} font-bold mt-4 px-3 py-1 rounded-full border ${riskState.bg}`}
                   >
-                    {riskLabel}
+                    {riskState.label}
                   </motion.p>
                 )}
               </AnimatePresence>

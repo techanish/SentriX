@@ -1,10 +1,13 @@
 "use client";
 
-import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { useUser, useClerk, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { Shield } from "lucide-react";
 
 export function NavBar() {
+  const { isSignedIn, isLoaded } = useUser();
+  const { openSignIn, openSignUp } = useClerk();
+
   return (
     <nav className="w-full border-b border-white/5 bg-black/60 backdrop-blur-xl sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 py-3.5 flex justify-between items-center">
@@ -31,21 +34,25 @@ export function NavBar() {
           </Link>
 
           <div className="pl-4 border-l border-white/10 flex items-center gap-3">
-            <Show when="signed-out">
-              <SignInButton>
-                <button className="text-neutral-400 hover:text-white transition-colors text-sm">
+            {isLoaded && !isSignedIn && (
+              <>
+                <button 
+                  onClick={() => openSignIn()}
+                  className="text-neutral-400 hover:text-white transition-colors text-sm"
+                >
                   Sign In
                 </button>
-              </SignInButton>
-              <SignUpButton>
-                <button className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-lg font-bold text-sm transition-all hover:shadow-lg hover:shadow-emerald-900/30">
+                <button 
+                  onClick={() => openSignUp()}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-lg font-bold text-sm transition-all hover:shadow-lg hover:shadow-emerald-900/30"
+                >
                   Get Started
                 </button>
-              </SignUpButton>
-            </Show>
-            <Show when="signed-in">
+              </>
+            )}
+            {isLoaded && isSignedIn && (
               <UserButton />
-            </Show>
+            )}
           </div>
         </div>
       </div>
