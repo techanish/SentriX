@@ -15,6 +15,8 @@ class Database:
         self.db = None
         self.scans = None
         self.chat_logs = None
+        self.users = None
+        self.reports = None
 
     def connect(self):
         uri = os.environ.get("MONGODB_URI", DEFAULT_URI)
@@ -26,6 +28,13 @@ class Database:
             self.db = self.client.get_database("sentrix_db")
             self.scans = self.db.get_collection("scans")
             self.chat_logs = self.db.get_collection("chat_logs")
+            self.users = self.db.get_collection("users")
+            self.reports = self.db.get_collection("reports")
+            
+            # Create indexes for fast lookup based on email
+            self.users.create_index("email", unique=True)
+            self.reports.create_index("user_email")
+            
             logger.info("Successfully connected to MongoDB.")
         except Exception as e:
             logger.error(f"Failed to connect to MongoDB: {e}")

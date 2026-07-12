@@ -49,3 +49,28 @@ The system consists of a multi-agent AI team orchestrated by the **Planner Agent
 2. Run backend: `cd backend && uvicorn main:app --reload`
 3. Run Celery: `cd backend && celery -A workers.tasks worker --loglevel=info`
 4. Run frontend: `cd frontend && npm run dev`
+
+
+## Enterprise Architecture Updates
+- Add architecture overview to docs
+- Document NextAuth integration steps
+- Explain MongoDB container limits
+- Document OAuth environment variables
+- Detail the 10-report storage cap
+- Explain data purging in settings
+- Document the GET /history endpoint
+- Document the POST /scan payload updates
+- Detail the frontend middleware logic
+- Explain the protected route redirects
+- Document GitHub SSO configuration
+- Document Google SSO configuration
+- Explain MongoDB unique indexing on emails
+- Document the DELETE /settings/data route
+- Document the DELETE /settings/account route
+- Explain JSON serialization stripping for MongoDB
+- Add troubleshooting for Vercel builds
+- Document Lucide SVG inline replacements
+- Explain the global layout persistence
+- Document the dark mode typography plugin
+- Add developer attribution details
+- Finalize enterprise documentation layout
