@@ -34,6 +34,7 @@ export default function PremiumDashboard() {
   const [findings, setFindings] = useState<Finding[]>([]);
   const [scanFiles, setScanFiles] = useState<VulnerabilityFile[]>([]);
   const [riskState, setRiskState] = useState({ score: "—", label: "", text: "text-neutral-500", border: "border-neutral-500/20", bg: "bg-neutral-900/30 border-neutral-800" });
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const [terminalSteps, setTerminalSteps] = useState<TerminalStep[]>([]);
   const [repoName, setRepoName] = useState("waiting-for-target");
 
@@ -132,6 +133,12 @@ export default function PremiumDashboard() {
     if (high >= 1) return { score: "B-", label: "Moderate Risk", text: "text-amber-400", border: "border-amber-400/30", bg: "bg-amber-950/30 border-amber-900/40" };
     return { score: "A", label: "Low Risk", text: "text-emerald-500", border: "border-emerald-500/30", bg: "bg-emerald-950/30 border-emerald-900/40" };
   };
+
+  useEffect(() => {
+    const handleClickOutside = () => setOpenDropdownId(null);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   const handleScan = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -639,13 +646,33 @@ export default function PremiumDashboard() {
                       <button onClick={() => loadReport(report)} className="font-bold text-sm truncate pr-4 text-cyan-400 hover:text-cyan-300 transition-colors text-left">
                         {report.repo_name || report.repo || report.repo_url || "Repository"}
                       </button>
-                      <button 
-                        onClick={(e) => deleteReport(report._id, e)} 
-                        className="text-neutral-600 hover:text-rose-400 p-1 -mr-1 transition-colors"
-                        title="Delete Report"
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
+                      <div className="relative">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setOpenDropdownId(openDropdownId === report._id ? null : report._id); }} 
+                          className="text-neutral-600 hover:text-white p-1 -mr-1 transition-colors"
+                          title="Options"
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </button>
+                        <AnimatePresence>
+                          {openDropdownId === report._id && (
+                            <motion.div 
+                              initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                              transition={{ duration: 0.15 }}
+                              className="absolute right-0 top-full mt-1 w-28 bg-rose-950/40 backdrop-blur-xl border border-rose-500/30 rounded-lg overflow-hidden z-50 shadow-lg shadow-black/50"
+                            >
+                              <button 
+                                onClick={(e) => deleteReport(report._id, e)} 
+                                className="w-full px-3 py-2 text-left text-xs text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 font-bold transition-colors flex items-center gap-2"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> Delete
+                              </button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
                     <div className="flex justify-between items-center mt-2">
                       <span className="text-xs text-neutral-500">{report.summary?.total_findings || report.vulnerability_count || 0} findings</span>
