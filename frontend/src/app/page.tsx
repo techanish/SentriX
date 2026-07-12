@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Shield, AlertTriangle, GitBranch, Terminal, Loader2, XCircle, CheckCircle2, ShieldAlert, Clock, Trash2, X } from "lucide-react";
+import { Search, Shield, AlertTriangle, GitBranch, Terminal, Loader2, XCircle, CheckCircle2, ShieldAlert, Clock, Trash2, X, MoreHorizontal } from "lucide-react";
 import { VulnerabilityExplorer, type VulnerabilityFile } from "@/components/VulnerabilityExplorer";
 import { ChatAssistant } from "@/components/ChatAssistant";
 import { ThreeBackground } from "@/components/ThreeBackground";
@@ -56,6 +56,54 @@ export default function PremiumDashboard() {
         .catch(err => console.error("Failed to fetch history:", err));
     }
   }, [email]);
+
+  const loadReport = (report: any) => {
+    setRepoUrl(report.repo || report.repo_url || "");
+    setRepoName(getRepoName(report.repo || report.repo_url || ""));
+    const files: VulnerabilityFile[] = (report.files || []).map((f: any) => ({
+      ...f,
+      vulnerabilities: f.vulnerabilities.map((v: any) => ({
+        ...v,
+        lineStart: v.line_start || 1,
+        lineEnd: v.line_end || 1,
+      }))
+    }));
+
+    const scanFindings: Finding[] = [];
+    files.forEach(f => {
+      f.vulnerabilities.forEach(v => {
+        scanFindings.push({
+          name: v.name,
+          severity: v.severity,
+          agent: v.agent,
+          detail: v.description,
+        });
+      });
+    });
+
+    setScanFiles(files);
+    setFindings(scanFindings);
+    setRiskState(calculateRisk(scanFindings));
+    setScanStatus("done");
+    setShowHistory(false);
+    
+    setTerminalSteps([
+      { agent: "History", action: "Loaded previous report from database", time: "0.1s", status: "done" }
+    ]);
+  };
+
+  const deleteReport = async (reportId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!reportId) return;
+    try {
+      const res = await fetch(`${API_BASE}/history/${reportId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setHistory(prev => prev.filter(r => r._id !== reportId));
+      }
+    } catch (err) {
+      console.error("Failed to delete report", err);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -571,22 +619,42 @@ export default function PremiumDashboard() {
                   No scan history yet.
                 </div>
               ) : (
-                history.map((report, idx) => (
-                  <div key={idx} className="p-4 rounded-xl canvas-card hover:border-white/10 transition-colors">
+                history.map((report, idx) => {
+                  let timestamp = "—";
+                  if (report.timestamp) timestamp = new Date(report.timestamp).toLocaleDateString();
+                  else if (report._id) timestamp = new Date(parseInt(report._id.substring(0, 8), 16) * 1000).toLocaleDateString();
+                  
+                  let risk = report.risk_score;
+                  if (!risk && report.summary?.severity_counts) {
+                    const r = calculateRisk([
+                      ...Array(report.summary.severity_counts.CRITICAL || 0).fill({ severity: "CRITICAL" }),
+                      ...Array(report.summary.severity_counts.HIGH || 0).fill({ severity: "HIGH" })
+                    ] as any);
+                    risk = r.score;
+                  }
+                  
+                  return (
+                  <div key={idx} className="p-4 rounded-xl canvas-card hover:border-white/10 transition-colors group">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-bold text-sm truncate pr-4 text-cyan-400">{report.repo_name || report.repo || "Repository"}</h3>
-                      <span className="text-[10px] text-neutral-600 whitespace-nowrap">
-                        {report.timestamp ? new Date(report.timestamp).toLocaleDateString() : "—"}
-                      </span>
+                      <button onClick={() => loadReport(report)} className="font-bold text-sm truncate pr-4 text-cyan-400 hover:text-cyan-300 transition-colors text-left">
+                        {report.repo_name || report.repo || report.repo_url || "Repository"}
+                      </button>
+                      <button 
+                        onClick={(e) => deleteReport(report._id, e)} 
+                        className="text-neutral-600 hover:text-rose-400 p-1 -mr-1 transition-colors"
+                        title="Delete Report"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center mt-2">
                       <span className="text-xs text-neutral-500">{report.summary?.total_findings || report.vulnerability_count || 0} findings</span>
                       <span className="text-xs font-bold px-2 py-0.5 bg-white/5 rounded text-neutral-400">
-                        {report.risk_score || "—"}
+                        {risk || "—"}
                       </span>
                     </div>
                   </div>
-                ))
+                )})
               )}
             </div>
 

@@ -168,6 +168,18 @@ def get_history():
         
     return jsonify({"reports": reports})
 
+@api_bp.route("/history/<report_id>", methods=["DELETE"])
+def delete_single_report(report_id):
+    from bson.objectid import ObjectId
+    db = get_db()
+    if db.reports is not None:
+        try:
+            db.reports.delete_one({"_id": ObjectId(report_id)})
+            return jsonify({"message": "Report deleted"})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 400
+    return jsonify({"error": "DB not configured"}), 500
+
 @api_bp.route("/settings/data", methods=["DELETE"])
 def purge_data():
     data = request.get_json()
