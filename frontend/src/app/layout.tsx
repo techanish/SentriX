@@ -1,4 +1,4 @@
-import { ClerkProvider, SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { ClerkProvider, SignInButton, SignUpButton, Show, UserButton } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
@@ -45,17 +45,17 @@ export default function RootLayout({
                 <Link href="/settings" className="hover:text-foreground transition-colors">Settings</Link>
                 
                 <div className="pl-4 border-l border-neutral-300 dark:border-neutral-700 flex items-center gap-4">
-                  <SignedOut>
+                  <Show when="signed-out">
                     <SignInButton mode="modal">
                       <button className="hover:text-foreground transition-colors">Sign In</button>
                     </SignInButton>
                     <SignUpButton mode="modal">
                       <button className="bg-foreground text-background px-4 py-2 rounded-lg font-bold hover:opacity-90 transition-opacity">Sign Up</button>
                     </SignUpButton>
-                  </SignedOut>
-                  <SignedIn>
+                  </Show>
+                  <Show when="signed-in">
                     <UserButton afterSignOutUrl="/" />
-                  </SignedIn>
+                  </Show>
                 </div>
               </div>
             </div>
