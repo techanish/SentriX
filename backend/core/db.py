@@ -46,3 +46,5 @@ def get_db():
     if not db_instance.client:
         db_instance.connect()
     return db_instance
+
+#  Optimized execution pass 2 for refactor_oauth_provider_scopes
