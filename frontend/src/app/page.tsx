@@ -1,16 +1,14 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Shield, AlertTriangle, GitBranch, Terminal, Loader2, XCircle, CheckCircle2, ShieldAlert } from "lucide-react";
+import { Search, Shield, AlertTriangle, GitBranch, Terminal, Loader2, XCircle, CheckCircle2, ShieldAlert, Clock, Trash2, X } from "lucide-react";
 import { VulnerabilityExplorer, type VulnerabilityFile } from "@/components/VulnerabilityExplorer";
 import { ChatAssistant } from "@/components/ChatAssistant";
 import { ThreeBackground } from "@/components/ThreeBackground";
 import { useState, useEffect, useCallback } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useUser, useClerk } from "@clerk/nextjs";
 
 const API_BASE = process.env.NODE_ENV === "production" ? "/api/backend/api" : "http://localhost:8000/api";
-
-// Mock data removed. We now fetch real files from the backend scan!
 
 type ScanStatus = "idle" | "scanning" | "done" | "error";
 
@@ -40,36 +38,31 @@ export default function PremiumDashboard() {
   const [terminalSteps, setTerminalSteps] = useState<TerminalStep[]>([]);
   const [repoName, setRepoName] = useState("waiting-for-target");
 
-  // Clerk User
   const { user, isLoaded } = useUser();
+  const { openSignIn } = useClerk();
   const email = user?.primaryEmailAddress?.emailAddress;
-  
-  // History Sidebar & Limits
+
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
   const [showStorageFull, setShowStorageFull] = useState(false);
 
-  // Fetch History on Mount
   useEffect(() => {
     if (email) {
       fetch(`${API_BASE}/history?user_email=${encodeURIComponent(email)}`)
         .then(res => res.json())
         .then(data => {
-          if (data.history) setHistory(data.history);
+          if (data.reports) setHistory(data.reports);
+          else if (data.history) setHistory(data.history);
         })
         .catch(err => console.error("Failed to fetch history:", err));
     }
   }, [email]);
 
-  // Prevent hydration mismatch from browser extensions (Bitdefender, Grammarly, etc.)
-  useEffect(() => { 
-    setMounted(true); 
-    
-    // Silence Unhandled Rejection errors caused by Monaco Editor CDN being blocked by extensions
+  useEffect(() => {
+    setMounted(true);
     const handleRejection = (e: PromiseRejectionEvent) => {
       if (typeof e.reason === "object" && e.reason !== null && !(e.reason instanceof Error)) {
         e.preventDefault();
-        console.warn("Caught unhandled rejection (likely Monaco CDN block):", e.reason);
       }
     };
     window.addEventListener("unhandledrejection", handleRejection);
@@ -97,7 +90,12 @@ export default function PremiumDashboard() {
     e.preventDefault();
     if (!repoUrl.trim()) return;
 
-    // Reset state
+    // AUTH GATE: If not signed in, trigger Clerk modal
+    if (!user) {
+      openSignIn();
+      return;
+    }
+
     setScanStatus("scanning");
     setScanError("");
     setFindings([]);
@@ -107,7 +105,6 @@ export default function PremiumDashboard() {
     const name = getRepoName(repoUrl);
     setRepoName(name);
 
-    // Animate terminal steps
     const steps: TerminalStep[] = [
       { agent: "Planner Agent", action: "Initializing agent swarm...", time: "...", status: "active" },
       { agent: "Secret Agent", action: "Waiting...", time: "—", status: "pending" },
@@ -119,13 +116,12 @@ export default function PremiumDashboard() {
     try {
       const startTime = Date.now();
 
-      // Fetch from backend
       const fetchPromise = fetch(`${API_BASE}/scan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           repo_url: repoUrl.trim(),
-          user_email: email // Pass the logged-in user to the backend
+          user_email: email
         }),
       }).then(async (res) => {
         if (!res.ok) {
@@ -139,7 +135,6 @@ export default function PremiumDashboard() {
         return res.json();
       });
 
-      // Animate steps concurrently while waiting
       const animatePromise = (async () => {
         await new Promise(r => setTimeout(r, 800));
         steps[0] = { agent: "Planner Agent", action: `Cloned & parsed ${name} architecture`, time: `0.8s`, status: "done" };
@@ -158,17 +153,14 @@ export default function PremiumDashboard() {
         steps[3].status = "active";
         steps[3].action = "Analyzing Abstract Syntax Trees...";
         setTerminalSteps([...steps]);
-      })().catch(err => console.warn("Animation loop aborted", err));
+      })().catch(() => {});
 
-      // Wait for both fetch and animation to finish
       const [data] = await Promise.all([fetchPromise, animatePromise]);
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 
-      // Finish the final step
       steps[3] = { agent: "Code Review Agent", action: `Completed AST pattern matching`, time: `${elapsed}s`, status: "done" };
       setTerminalSteps([...steps]);
 
-      // Extract findings from the new backend payload structure
       const scanFindings: Finding[] = [];
       const files: VulnerabilityFile[] = (data.files || []).map((f: any) => ({
         ...f,
@@ -178,7 +170,7 @@ export default function PremiumDashboard() {
           lineEnd: v.line_end || 1,
         }))
       }));
-      
+
       files.forEach(f => {
         f.vulnerabilities.forEach(v => {
           scanFindings.push({
@@ -202,7 +194,6 @@ export default function PremiumDashboard() {
       setScanError(err.message || "Failed to connect to backend");
       setScanStatus("error");
 
-      // Mark all steps as failed
       steps.forEach((s, i) => {
         if (s.status !== "done") {
           steps[i] = { ...s, action: "Failed", time: "—", status: "done" };
@@ -210,19 +201,16 @@ export default function PremiumDashboard() {
       });
       setTerminalSteps([...steps]);
     }
-  }, [repoUrl]);
+  }, [repoUrl, user, email, openSignIn]);
 
-  // Don't render until mounted to avoid hydration mismatches from browser extensions
-  if (!mounted) {
-    return null;
-  }
+  if (!mounted) return null;
 
   const severityColor = (severity: string) => {
     switch (severity) {
-      case "CRITICAL": return { bg: "bg-rose-50 dark:bg-rose-950/20", border: "border-rose-100 dark:border-rose-900/30", text: "text-rose-600 dark:text-rose-400", badge: "bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300" };
-      case "HIGH": return { bg: "bg-amber-50 dark:bg-amber-950/20", border: "border-amber-100 dark:border-amber-900/30", text: "text-amber-600 dark:text-amber-400", badge: "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300" };
-      case "MEDIUM": return { bg: "bg-sky-50 dark:bg-sky-950/20", border: "border-sky-100 dark:border-sky-900/30", text: "text-sky-600 dark:text-sky-400", badge: "bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300" };
-      default: return { bg: "bg-neutral-50 dark:bg-neutral-950/20", border: "border-neutral-100 dark:border-neutral-900/30", text: "text-neutral-600 dark:text-neutral-400", badge: "bg-neutral-100 dark:bg-neutral-900/50 text-neutral-700 dark:text-neutral-300" };
+      case "CRITICAL": return { bg: "bg-rose-950/30", border: "border-rose-900/40", text: "text-rose-400", badge: "bg-rose-900/50 text-rose-300" };
+      case "HIGH": return { bg: "bg-amber-950/30", border: "border-amber-900/40", text: "text-amber-400", badge: "bg-amber-900/50 text-amber-300" };
+      case "MEDIUM": return { bg: "bg-sky-950/30", border: "border-sky-900/40", text: "text-sky-400", badge: "bg-sky-900/50 text-sky-300" };
+      default: return { bg: "bg-neutral-950/30", border: "border-neutral-800", text: "text-neutral-400", badge: "bg-neutral-800 text-neutral-300" };
     }
   };
 
@@ -235,37 +223,36 @@ export default function PremiumDashboard() {
   return (
     <div className="w-full relative min-h-screen">
       <ThreeBackground />
-      
+
       {/* Storage Full Modal */}
       <AnimatePresence>
         {showStorageFull && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
           >
-            <motion.div 
-              initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-              className="bg-background border border-rose-500/30 rounded-2xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden"
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
+              className="canvas-card rounded-2xl p-8 max-w-md w-full relative overflow-hidden"
             >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 to-amber-500" />
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 via-amber-500 to-rose-500" />
               <ShieldAlert className="w-12 h-12 text-rose-500 mb-4" />
               <h2 className="text-2xl font-black mb-2">Storage Limit Reached</h2>
-              <p className="text-neutral-400 text-sm mb-6">
-                Your account has reached the maximum capacity of 10 saved scan reports. 
-                Please delete old reports in your Settings to run new analyses.
+              <p className="text-neutral-500 text-sm mb-6">
+                Your account has hit the 10-report cap. Delete old reports in Settings to continue scanning.
               </p>
-              <div className="flex gap-4">
-                <button 
+              <div className="flex gap-3">
+                <button
                   onClick={() => setShowStorageFull(false)}
-                  className="flex-1 px-4 py-2 rounded-lg border border-white/10 hover:bg-white/5 transition-colors text-sm font-bold"
+                  className="flex-1 px-4 py-2.5 rounded-lg border border-white/10 hover:bg-white/5 transition-colors text-sm font-bold"
                 >
                   Dismiss
                 </button>
-                <a 
+                <a
                   href="/settings"
-                  className="flex-1 px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-center transition-colors text-sm font-bold"
+                  className="flex-1 px-4 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-center transition-colors text-sm font-bold"
                 >
-                  Manage Data
+                  Manage Storage
                 </a>
               </div>
             </motion.div>
@@ -273,56 +260,64 @@ export default function PremiumDashboard() {
         )}
       </AnimatePresence>
 
-      <main className="max-w-7xl mx-auto px-8 py-16 space-y-16">
-        
-        {/* Header Action Bar */}
+      <main className="max-w-7xl mx-auto px-6 sm:px-8 py-12 sm:py-16 space-y-12 sm:space-y-16">
+
+        {/* Header Bar */}
         <div className="flex justify-between items-center w-full">
-          <div /> {/* Spacer */}
-          <button 
-            onClick={() => setShowHistory(!showHistory)}
-            className="bg-background border border-white/10 px-4 py-2 rounded-full text-sm font-bold hover:bg-white/5 transition-colors flex items-center gap-2"
-          >
-            History 
-            <span className="bg-foreground text-background px-2 py-0.5 rounded-full text-xs">
-              {history.length}/10
-            </span>
-          </button>
+          <div />
+          {user && (
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="canvas-card px-4 py-2 rounded-full text-sm font-bold hover:border-white/20 transition-all flex items-center gap-2"
+            >
+              <Clock className="w-4 h-4 text-neutral-500" />
+              History
+              <span className="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full text-xs font-bold">
+                {history.length}/10
+              </span>
+            </button>
+          )}
         </div>
 
-        {/* Search / Hero Section */}
+        {/* Hero */}
         <section className="text-center space-y-8 max-w-3xl mx-auto">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.6 }}
           >
-            <h1 className="text-5xl font-black tracking-tight mb-4">
-              Autonomous Security Audits.
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-bold text-emerald-500 uppercase tracking-widest mb-6">
+              <Shield className="w-3 h-3" />
+              AI-Powered Security
+            </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight mb-5 leading-[1.1]">
+              Autonomous Security<br />
+              <span className="gradient-text">Audits in Seconds.</span>
             </h1>
-            <p className="text-lg text-neutral-500 dark:text-neutral-400">
-              Paste a repository link. Our specialized AI agent swarm will map the architecture, correlate vulnerabilities, and generate secure patches instantly.
+            <p className="text-base sm:text-lg text-neutral-500 max-w-xl mx-auto leading-relaxed">
+              Paste a repository link. Our AI agent swarm maps the architecture, correlates vulnerabilities, and generates secure patches — instantly.
             </p>
           </motion.div>
 
-          <motion.form 
+          <motion.form
             onSubmit={handleScan}
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
-            className="flex items-center gap-2 bg-background canvas-card p-2 rounded-xl focus-within:ring-2 focus-within:ring-foreground transition-all"
+            className="flex items-center gap-2 canvas-card p-2 rounded-xl focus-within:border-emerald-500/30 transition-all"
           >
-            <GitBranch className="w-6 h-6 text-neutral-400 ml-3 shrink-0" />
-            <input 
-              type="text" 
+            <GitBranch className="w-5 h-5 text-neutral-600 ml-3 shrink-0" />
+            <input
+              type="text"
               value={repoUrl}
               onChange={(e) => setRepoUrl(e.target.value)}
               placeholder="https://github.com/your-org/your-repo"
-              className="flex-1 bg-transparent border-none outline-none px-4 py-3 text-foreground placeholder:text-neutral-400 font-mono text-sm"
+              className="flex-1 bg-transparent border-none outline-none px-3 py-3 text-white placeholder:text-neutral-600 font-mono text-sm"
             />
-            <button 
+            <button
               type="submit"
               disabled={scanStatus === "scanning"}
-              className="bg-foreground text-background px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-900/20 text-sm"
             >
               {scanStatus === "scanning" ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -333,6 +328,18 @@ export default function PremiumDashboard() {
             </button>
           </motion.form>
 
+          {/* Auth hint for signed-out users */}
+          {isLoaded && !user && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="text-xs text-neutral-600"
+            >
+              Sign in required to run scans. Your reports are saved to your personal storage container.
+            </motion.p>
+          )}
+
           {/* Error Banner */}
           <AnimatePresence>
             {scanStatus === "error" && (
@@ -340,7 +347,7 @@ export default function PremiumDashboard() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="flex items-center gap-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-lg px-4 py-3 text-sm text-rose-700 dark:text-rose-300"
+                className="flex items-center gap-3 bg-rose-950/30 border border-rose-900/40 rounded-lg px-4 py-3 text-sm text-rose-300"
               >
                 <XCircle className="w-5 h-5 shrink-0" />
                 <span>{scanError || "An unknown error occurred."}</span>
@@ -350,72 +357,70 @@ export default function PremiumDashboard() {
         </section>
 
         {/* Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* Main Status Panel (Terminal Look) */}
-          <motion.div 
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+          {/* Terminal Panel */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="lg:col-span-8 rounded-2xl overflow-hidden shadow-2xl border border-black/20 dark:border-white/10 flex flex-col h-full"
+            className="lg:col-span-8 rounded-2xl overflow-hidden border border-white/[0.06] flex flex-col h-full"
           >
-            {/* Terminal Header */}
-            <div className="bg-[#1e1e1e] px-4 py-3 flex items-center gap-2 border-b border-[#333] shrink-0">
-              <div className="flex gap-2">
-                <div className="w-3 h-3 rounded-full bg-rose-500"></div>
-                <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+            <div className="bg-[#0d0d0d] px-4 py-3 flex items-center gap-2 border-b border-white/[0.06] shrink-0">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-rose-500/80" />
+                <div className="w-3 h-3 rounded-full bg-amber-500/80" />
+                <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
               </div>
-              <div className="flex-1 text-center font-mono text-xs text-neutral-400">
+              <div className="flex-1 text-center font-mono text-xs text-neutral-600">
                 sentrix-core ~ {repoName}
               </div>
             </div>
 
-            {/* Terminal Body */}
-            <div className="bg-[#0a0a0a] p-6 font-mono text-sm space-y-4 min-h-[300px] flex-1">
+            <div className="bg-[#080808] p-6 font-mono text-sm space-y-4 min-h-[300px] flex-1">
               <div className="text-emerald-500 mb-6 flex items-center gap-2">
-                <Terminal className="w-4 h-4" /> 
-                {scanStatus === "idle" 
-                  ? "SentriX Agent Swarm v1.0 — Ready" 
+                <Terminal className="w-4 h-4" />
+                {scanStatus === "idle"
+                  ? "SentriX Agent Swarm v1.0 — Ready"
                   : `Target: ${repoName} (main branch)`}
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {displaySteps.map((step, idx) => (
-                  <motion.div 
-                    key={`${step.agent}-${idx}`} 
+                  <motion.div
+                    key={`${step.agent}-${idx}`}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="flex items-start gap-4"
+                    transition={{ delay: idx * 0.08 }}
+                    className="flex items-start gap-3"
                   >
-                    <div className="mt-0.5 shrink-0">
-                      {step.status === "done" ? <span className="text-emerald-500">[OK]</span> : 
-                       step.status === "active" ? <span className="text-cyan-400 animate-pulse">[*] </span> : 
-                       <span className="text-neutral-600">[-] </span>}
+                    <div className="mt-0.5 shrink-0 font-bold text-xs w-8">
+                      {step.status === "done" ? <span className="text-emerald-500">[OK]</span> :
+                       step.status === "active" ? <span className="text-cyan-400 animate-pulse">[**]</span> :
+                       <span className="text-neutral-700">[-]</span>}
                     </div>
-                    <div className="flex-1 flex flex-col sm:flex-row justify-between sm:items-center">
+                    <div className="flex-1 flex flex-col sm:flex-row justify-between sm:items-center gap-1">
                       <div>
-                        <span className={`font-bold ${step.status === 'pending' ? 'text-neutral-600' : 'text-cyan-300'}`}>
-                          {step.agent}: 
+                        <span className={`font-bold ${step.status === 'pending' ? 'text-neutral-700' : 'text-cyan-300'}`}>
+                          {step.agent}:
                         </span>
-                        <span className={`ml-2 ${step.status === 'pending' ? 'text-neutral-600' : 'text-neutral-300'}`}>
+                        <span className={`ml-2 ${step.status === 'pending' ? 'text-neutral-700' : 'text-neutral-400'}`}>
                           {step.action}
                         </span>
                       </div>
-                      <span className="text-xs text-neutral-500 mt-1 sm:mt-0">{step.time}</span>
+                      <span className="text-xs text-neutral-600">{step.time}</span>
                     </div>
                   </motion.div>
                 ))}
-                
+
                 {scanStatus === "scanning" && (
-                  <div className="flex items-center gap-2 text-cyan-400 animate-pulse mt-4">
-                    <span>_</span>
+                  <div className="flex items-center gap-1 text-emerald-500 mt-4">
+                    <span className="animate-blink">█</span>
                   </div>
                 )}
                 {scanStatus === "done" && (
-                  <motion.div 
-                    initial={{ opacity: 0 }} 
+                  <motion.div
+                    initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="text-emerald-400 mt-4 flex items-center gap-2"
                   >
@@ -427,27 +432,32 @@ export default function PremiumDashboard() {
             </div>
           </motion.div>
 
-          {/* Stats & Vulnerabilities */}
-          <motion.div 
+          {/* Stats & Findings */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="lg:col-span-4 space-y-8"
+            className="lg:col-span-4 space-y-6"
           >
             {/* Score Card */}
             <div className="canvas-card rounded-2xl p-6 flex flex-col items-center justify-center text-center">
-              <div className="text-xs font-bold tracking-widest text-neutral-500 uppercase mb-4">Risk Score</div>
-              <div className="text-7xl font-black text-foreground">
-                {scanStatus === "scanning" ? (
-                  <Loader2 className="w-16 h-16 animate-spin text-neutral-400 mx-auto" />
-                ) : riskScore}
+              <div className="text-[10px] font-bold tracking-[0.2em] text-neutral-600 uppercase mb-4">Risk Score</div>
+              <div className="relative">
+                <div className="text-7xl font-black">
+                  {scanStatus === "scanning" ? (
+                    <Loader2 className="w-16 h-16 animate-spin text-neutral-700 mx-auto" />
+                  ) : riskScore}
+                </div>
+                {scanStatus === "done" && (
+                  <div className="absolute -inset-4 rounded-full border-2 border-emerald-500/20 animate-pulse-glow" />
+                )}
               </div>
               <AnimatePresence>
                 {scanStatus === "done" && riskLabel && (
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="text-sm text-rose-500 font-medium mt-4 bg-rose-50 dark:bg-rose-950/30 px-3 py-1 rounded-full"
+                    className="text-xs text-rose-400 font-bold mt-4 bg-rose-950/30 px-3 py-1 rounded-full border border-rose-900/30"
                   >
                     {riskLabel}
                   </motion.p>
@@ -457,26 +467,26 @@ export default function PremiumDashboard() {
 
             {/* Findings List */}
             <div className="canvas-card rounded-2xl p-6">
-              <h3 className="font-bold mb-4 flex items-center justify-between">
+              <h3 className="font-bold mb-4 flex items-center justify-between text-sm">
                 Findings
-                <span className="text-xs font-normal text-neutral-500">
+                <span className="text-[10px] font-normal text-neutral-600">
                   {scanStatus === "scanning" ? "Scanning..." : scanStatus === "done" ? `${findings.length} found` : "Live Updates"}
                 </span>
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {scanStatus === "scanning" ? (
-                  <div className="text-sm text-neutral-500 text-center py-6 animate-pulse flex flex-col items-center gap-2">
+                  <div className="text-sm text-neutral-600 text-center py-8 animate-pulse flex flex-col items-center gap-2">
                     <Loader2 className="w-5 h-5 animate-spin" />
                     Analyzing repository...
                   </div>
                 ) : scanStatus === "idle" ? (
-                  <div className="text-sm text-neutral-500 text-center py-6">
-                    Enter a repository URL to begin analysis.
+                  <div className="text-sm text-neutral-600 text-center py-8">
+                    Enter a repo URL to begin.
                   </div>
                 ) : scanStatus === "error" ? (
-                  <div className="text-sm text-rose-500 text-center py-6 flex flex-col items-center gap-2">
+                  <div className="text-sm text-rose-500 text-center py-8 flex flex-col items-center gap-2">
                     <XCircle className="w-5 h-5" />
-                    Scan failed. Check backend connection.
+                    Scan failed.
                   </div>
                 ) : (
                   <AnimatePresence>
@@ -485,15 +495,15 @@ export default function PremiumDashboard() {
                       return (
                         <motion.div
                           key={`${finding.name}-${idx}`}
-                          initial={{ opacity: 0, y: 10 }}
+                          initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.1 }}
+                          transition={{ delay: idx * 0.06 }}
                           className={`flex items-center justify-between p-3 rounded-lg ${colors.bg} border ${colors.border}`}
                         >
-                          <div className={`flex items-center gap-2 ${colors.text} text-sm font-medium`}>
-                            <AlertTriangle className="w-4 h-4" /> {finding.name}
+                          <div className={`flex items-center gap-2 ${colors.text} text-xs font-medium`}>
+                            <AlertTriangle className="w-3.5 h-3.5" /> {finding.name}
                           </div>
-                          <span className={`text-xs font-bold px-2 py-1 ${colors.badge} rounded`}>{finding.severity}</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 ${colors.badge} rounded`}>{finding.severity}</span>
                         </motion.div>
                       );
                     })}
@@ -502,13 +512,12 @@ export default function PremiumDashboard() {
               </div>
             </div>
           </motion.div>
-
         </div>
 
-        {/* Vulnerability Explorer — only after scan completes */}
+        {/* Vulnerability Explorer */}
         <AnimatePresence>
           {scanStatus === "done" && findings.length > 0 && (
-            <motion.section 
+            <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
@@ -517,13 +526,12 @@ export default function PremiumDashboard() {
               <div className="mb-4 flex items-center gap-3">
                 <ShieldAlert className="w-5 h-5 text-rose-400" />
                 <h3 className="text-lg font-bold">Vulnerability Analysis</h3>
-                <span className="text-xs text-neutral-500">Click a file to inspect • Click a vulnerability to jump to the affected lines</span>
+                <span className="text-xs text-neutral-600">Click a file → click a vulnerability → jump to affected lines</span>
               </div>
               <VulnerabilityExplorer files={scanFiles} />
             </motion.section>
           )}
         </AnimatePresence>
-
       </main>
 
       {/* History Sidebar */}
@@ -534,35 +542,50 @@ export default function PremiumDashboard() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 400, opacity: 0 }}
             transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-            className="fixed top-0 right-0 w-full sm:w-96 h-screen bg-background/95 backdrop-blur-xl border-l border-white/10 z-50 flex flex-col shadow-2xl"
+            className="fixed top-0 right-0 w-full sm:w-96 h-screen bg-[#080808]/95 backdrop-blur-xl border-l border-white/[0.06] z-50 flex flex-col shadow-2xl"
           >
-            <div className="p-6 border-b border-white/10 flex justify-between items-center bg-black/20">
+            <div className="p-6 border-b border-white/[0.06] flex justify-between items-center">
               <div>
                 <h2 className="font-bold text-lg">Scan History</h2>
-                <p className="text-xs text-neutral-500">{history.length} / 10 Reports Saved</p>
+                <p className="text-xs text-neutral-600 mt-1">{history.length} / 10 Reports Saved</p>
               </div>
-              <button onClick={() => setShowHistory(false)} className="text-neutral-400 hover:text-white transition-colors">
-                <XCircle className="w-6 h-6" />
+              <button onClick={() => setShowHistory(false)} className="text-neutral-600 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
               </button>
             </div>
-            
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+
+            {/* Storage Bar */}
+            <div className="px-6 py-4 border-b border-white/[0.06]">
+              <div className="flex justify-between text-xs text-neutral-500 mb-2">
+                <span>Storage Used</span>
+                <span className={history.length >= 10 ? "text-rose-400 font-bold" : "text-emerald-500"}>{history.length * 10}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${history.length * 10}%` }}
+                  className={`h-full rounded-full ${history.length >= 10 ? "bg-rose-500" : history.length >= 7 ? "bg-amber-500" : "bg-emerald-500"}`}
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {history.length === 0 ? (
-                <div className="text-center text-neutral-500 py-10 text-sm">
-                  No scan history found.
+                <div className="text-center text-neutral-600 py-10 text-sm">
+                  No scan history yet.
                 </div>
               ) : (
                 history.map((report, idx) => (
-                  <div key={idx} className="p-4 rounded-xl canvas-card border border-white/5 hover:border-white/10 transition-colors">
+                  <div key={idx} className="p-4 rounded-xl canvas-card hover:border-white/10 transition-colors">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-bold text-sm truncate pr-4 text-cyan-400">{report.repo_name || "Repository"}</h3>
-                      <span className="text-xs text-neutral-500 whitespace-nowrap">
-                        {new Date(report.timestamp).toLocaleDateString()}
+                      <h3 className="font-bold text-sm truncate pr-4 text-cyan-400">{report.repo_name || report.repo || "Repository"}</h3>
+                      <span className="text-[10px] text-neutral-600 whitespace-nowrap">
+                        {report.timestamp ? new Date(report.timestamp).toLocaleDateString() : "—"}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-neutral-400">{report.vulnerability_count} findings</span>
-                      <span className="text-xs font-bold px-2 py-1 bg-white/5 rounded text-neutral-300">
+                      <span className="text-xs text-neutral-500">{report.summary?.total_findings || report.vulnerability_count || 0} findings</span>
+                      <span className="text-xs font-bold px-2 py-0.5 bg-white/5 rounded text-neutral-400">
                         {report.risk_score || "—"}
                       </span>
                     </div>
@@ -570,10 +593,10 @@ export default function PremiumDashboard() {
                 ))
               )}
             </div>
-            
+
             {history.length >= 10 && (
-              <div className="p-4 bg-rose-500/10 border-t border-rose-500/20 text-xs text-rose-400 text-center">
-                Storage Full. Delete old reports in Settings.
+              <div className="p-4 bg-rose-950/30 border-t border-rose-900/30 text-xs text-rose-400 text-center font-medium">
+                Storage full — delete old reports in Settings
               </div>
             )}
           </motion.div>

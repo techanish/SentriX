@@ -1,4 +1,5 @@
 import { ClerkProvider } from "@clerk/nextjs";
+import { dark } from "@clerk/themes";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -15,8 +16,41 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SentriX AI",
-  description: "Next-generation Autonomous Security Scanner",
+  title: "SentriX AI — Autonomous Security Scanner",
+  description: "Next-generation AI-powered vulnerability scanning. Paste a repo, get a full security audit in seconds.",
+};
+
+const clerkAppearance = {
+  baseTheme: dark,
+  variables: {
+    colorPrimary: "#10b981",
+    colorBackground: "#0a0a0a",
+    colorInputBackground: "#111111",
+    colorInputText: "#e8e8e8",
+    colorText: "#e8e8e8",
+    colorTextSecondary: "#737373",
+    borderRadius: "0.75rem",
+    fontFamily: "var(--font-geist-sans), Inter, system-ui, sans-serif",
+    fontSize: "0.875rem",
+  },
+  elements: {
+    card: "bg-[#0a0a0a] border border-white/10 shadow-2xl backdrop-blur-xl",
+    headerTitle: "text-white font-black tracking-tight",
+    headerSubtitle: "text-neutral-500",
+    socialButtonsBlockButton: "bg-white/5 border-white/10 hover:bg-white/10 text-white",
+    socialButtonsBlockButtonText: "text-white font-medium",
+    formButtonPrimary: "bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-900/30",
+    footerActionLink: "text-emerald-500 hover:text-emerald-400 font-medium",
+    formFieldInput: "bg-[#111] border-white/10 text-white focus:border-emerald-500 focus:ring-emerald-500/20",
+    formFieldLabel: "text-neutral-400 font-medium",
+    dividerLine: "bg-white/10",
+    dividerText: "text-neutral-600",
+    identityPreviewEditButton: "text-emerald-500",
+    userButtonPopoverCard: "bg-[#0a0a0a] border border-white/10",
+    userButtonPopoverActionButton: "text-neutral-300 hover:bg-white/5",
+    userButtonPopoverActionButtonText: "text-neutral-300",
+    userButtonPopoverFooter: "hidden",
+  },
 };
 
 export default function RootLayout({
@@ -27,36 +61,36 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans selection:bg-neutral-800 selection:text-white dark:selection:bg-neutral-200 dark:selection:text-black" suppressHydrationWarning>
-        <ClerkProvider>
+      <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
+        <ClerkProvider appearance={clerkAppearance}>
           <NavBar />
 
-          {/* Main Content Area */}
           <div className="flex-1">
-          {children}
+            {children}
           </div>
 
-          {/* Global Footer */}
-          <footer className="w-full border-t border-black/10 dark:border-white/10 bg-background py-8 mt-auto">
-          <div className="max-w-7xl mx-auto px-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-neutral-500 dark:text-neutral-400">
-          <div>
-          Developer: <span className="text-foreground font-medium">techanish</span>
-          </div>
-          <div className="flex items-center gap-4">
-          <a href="https://github.com/techanish" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors" aria-label="GitHub">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
-          </a>
-          <a href="https://linkedin.com/in/techanish" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors" aria-label="LinkedIn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
-          </a>
-          <a href="https://instagram.com/techanish" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors" aria-label="Instagram">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
-          </a>
-          </div>
-          </div>
+          {/* Footer */}
+          <footer className="w-full border-t border-white/5 bg-black/40 py-8 mt-auto">
+            <div className="max-w-7xl mx-auto px-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-neutral-600">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse-glow" />
+                <span>Built by <span className="text-neutral-400 font-medium">techanish</span></span>
+              </div>
+              <div className="flex items-center gap-5">
+                <a href="https://github.com/techanish" target="_blank" rel="noopener noreferrer" className="text-neutral-600 hover:text-emerald-500 transition-colors" aria-label="GitHub">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+                </a>
+                <a href="https://linkedin.com/in/techanish" target="_blank" rel="noopener noreferrer" className="text-neutral-600 hover:text-emerald-500 transition-colors" aria-label="LinkedIn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+                </a>
+                <a href="https://instagram.com/techanish" target="_blank" rel="noopener noreferrer" className="text-neutral-600 hover:text-emerald-500 transition-colors" aria-label="Instagram">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+                </a>
+              </div>
+            </div>
           </footer>
         </ClerkProvider>
       </body>
