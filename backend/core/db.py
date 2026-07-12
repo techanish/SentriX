@@ -50,3 +50,5 @@ def get_db():
 #  Optimized execution pass 2 for refactor_oauth_provider_scopes
 
 #  Optimized execution pass 7 for optimize_history_endpoint_query_performance
+
+#  Optimized execution pass 12 for update_mongodb_unique_indexing_strategies
