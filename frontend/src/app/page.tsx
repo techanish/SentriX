@@ -204,23 +204,9 @@ export default function PremiumDashboard() {
   const displaySteps = terminalSteps.length > 0 ? terminalSteps : defaultSteps;
 
   return (
-    <div className="min-h-screen font-sans selection:bg-neutral-800 selection:text-white dark:selection:bg-neutral-200 dark:selection:text-black">
+    <div className="w-full relative">
       <ThreeBackground />
       
-      {/* Top Navigation */}
-      <nav className="w-full border-b border-black/10 dark:border-white/10 bg-background/80 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Shield className="w-6 h-6 text-foreground" />
-            <span className="text-xl font-bold tracking-tight">SentriX</span>
-          </div>
-          <div className="flex gap-6 text-sm font-medium text-neutral-500 dark:text-neutral-400">
-            <button className="hover:text-foreground transition-colors">Documentation</button>
-            <button className="hover:text-foreground transition-colors">Settings</button>
-          </div>
-        </div>
-      </nav>
-
       <main className="max-w-7xl mx-auto px-8 py-16 space-y-16">
         
         {/* Search / Hero Section */}
