@@ -6,6 +6,7 @@ import { VulnerabilityExplorer, type VulnerabilityFile } from "@/components/Vuln
 import { ChatAssistant } from "@/components/ChatAssistant";
 import { ThreeBackground } from "@/components/ThreeBackground";
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 
 const API_BASE = process.env.NODE_ENV === "production" ? "/api/backend/api" : "http://localhost:8000/api";
 
@@ -38,6 +39,26 @@ export default function PremiumDashboard() {
   const [riskLabel, setRiskLabel] = useState("");
   const [terminalSteps, setTerminalSteps] = useState<TerminalStep[]>([]);
   const [repoName, setRepoName] = useState("waiting-for-target");
+
+  // NextAuth Session
+  const { data: session } = useSession();
+  
+  // History Sidebar & Limits
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
+  const [showStorageFull, setShowStorageFull] = useState(false);
+
+  // Fetch History on Mount
+  useEffect(() => {
+    if (session?.user?.email) {
+      fetch(`${API_BASE}/history?user_email=${encodeURIComponent(session.user.email)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.history) setHistory(data.history);
+        })
+        .catch(err => console.error("Failed to fetch history:", err));
+    }
+  }, [session]);
 
   // Prevent hydration mismatch from browser extensions (Bitdefender, Grammarly, etc.)
   useEffect(() => { 
@@ -101,9 +122,16 @@ export default function PremiumDashboard() {
       const fetchPromise = fetch(`${API_BASE}/scan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ repo_url: repoUrl.trim() }),
+        body: JSON.stringify({ 
+          repo_url: repoUrl.trim(),
+          user_email: session?.user?.email // Pass the logged-in user to the backend
+        }),
       }).then(async (res) => {
         if (!res.ok) {
+          if (res.status === 403) {
+            setShowStorageFull(true);
+            throw new Error("Storage Limit Reached.");
+          }
           const errData = await res.json().catch(() => ({ error: "Backend unreachable" }));
           throw new Error(errData.error || `HTTP ${res.status}`);
         }
@@ -204,11 +232,62 @@ export default function PremiumDashboard() {
   const displaySteps = terminalSteps.length > 0 ? terminalSteps : defaultSteps;
 
   return (
-    <div className="w-full relative">
+    <div className="w-full relative min-h-screen">
       <ThreeBackground />
       
+      {/* Storage Full Modal */}
+      <AnimatePresence>
+        {showStorageFull && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+              className="bg-background border border-rose-500/30 rounded-2xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 to-amber-500" />
+              <ShieldAlert className="w-12 h-12 text-rose-500 mb-4" />
+              <h2 className="text-2xl font-black mb-2">Storage Limit Reached</h2>
+              <p className="text-neutral-400 text-sm mb-6">
+                Your account has reached the maximum capacity of 10 saved scan reports. 
+                Please delete old reports in your Settings to run new analyses.
+              </p>
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setShowStorageFull(false)}
+                  className="flex-1 px-4 py-2 rounded-lg border border-white/10 hover:bg-white/5 transition-colors text-sm font-bold"
+                >
+                  Dismiss
+                </button>
+                <a 
+                  href="/settings"
+                  className="flex-1 px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-center transition-colors text-sm font-bold"
+                >
+                  Manage Data
+                </a>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <main className="max-w-7xl mx-auto px-8 py-16 space-y-16">
         
+        {/* Header Action Bar */}
+        <div className="flex justify-between items-center w-full">
+          <div /> {/* Spacer */}
+          <button 
+            onClick={() => setShowHistory(!showHistory)}
+            className="bg-background border border-white/10 px-4 py-2 rounded-full text-sm font-bold hover:bg-white/5 transition-colors flex items-center gap-2"
+          >
+            History 
+            <span className="bg-foreground text-background px-2 py-0.5 rounded-full text-xs">
+              {history.length}/10
+            </span>
+          </button>
+        </div>
+
         {/* Search / Hero Section */}
         <section className="text-center space-y-8 max-w-3xl mx-auto">
           <motion.div 
@@ -445,6 +524,60 @@ export default function PremiumDashboard() {
         </AnimatePresence>
 
       </main>
+
+      {/* History Sidebar */}
+      <AnimatePresence>
+        {showHistory && (
+          <motion.div
+            initial={{ x: 400, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 400, opacity: 0 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+            className="fixed top-0 right-0 w-full sm:w-96 h-screen bg-background/95 backdrop-blur-xl border-l border-white/10 z-50 flex flex-col shadow-2xl"
+          >
+            <div className="p-6 border-b border-white/10 flex justify-between items-center bg-black/20">
+              <div>
+                <h2 className="font-bold text-lg">Scan History</h2>
+                <p className="text-xs text-neutral-500">{history.length} / 10 Reports Saved</p>
+              </div>
+              <button onClick={() => setShowHistory(false)} className="text-neutral-400 hover:text-white transition-colors">
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {history.length === 0 ? (
+                <div className="text-center text-neutral-500 py-10 text-sm">
+                  No scan history found.
+                </div>
+              ) : (
+                history.map((report, idx) => (
+                  <div key={idx} className="p-4 rounded-xl canvas-card border border-white/5 hover:border-white/10 transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-bold text-sm truncate pr-4 text-cyan-400">{report.repo_name || "Repository"}</h3>
+                      <span className="text-xs text-neutral-500 whitespace-nowrap">
+                        {new Date(report.timestamp).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-neutral-400">{report.vulnerability_count} findings</span>
+                      <span className="text-xs font-bold px-2 py-1 bg-white/5 rounded text-neutral-300">
+                        {report.risk_score || "—"}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            {history.length >= 10 && (
+              <div className="p-4 bg-rose-500/10 border-t border-rose-500/20 text-xs text-rose-400 text-center">
+                Storage Full. Delete old reports in Settings.
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <ChatAssistant />
     </div>
