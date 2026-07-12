@@ -52,3 +52,5 @@ def get_db():
 #  Optimized execution pass 7 for optimize_history_endpoint_query_performance
 
 #  Optimized execution pass 12 for update_mongodb_unique_indexing_strategies
+
+#  Optimized execution pass 17 for optimize_json_serialization_for_mongodb_objectids
