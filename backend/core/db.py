@@ -48,3 +48,5 @@ def get_db():
     return db_instance
 
 #  Optimized execution pass 2 for refactor_oauth_provider_scopes
+
+#  Optimized execution pass 7 for optimize_history_endpoint_query_performance
