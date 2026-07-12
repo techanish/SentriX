@@ -1,6 +1,6 @@
 "use client";
 
-import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { Shield } from "lucide-react";
 
@@ -31,7 +31,7 @@ export function NavBar() {
           </Link>
 
           <div className="pl-4 border-l border-white/10 flex items-center gap-3">
-            <Show when="signed-out">
+            <SignedOut>
               <SignInButton mode="modal">
                 <button className="text-neutral-400 hover:text-white transition-colors text-sm">
                   Sign In
@@ -42,10 +42,10 @@ export function NavBar() {
                   Get Started
                 </button>
               </SignUpButton>
-            </Show>
-            <Show when="signed-in">
+            </SignedOut>
+            <SignedIn>
               <UserButton />
-            </Show>
+            </SignedIn>
           </div>
         </div>
       </div>

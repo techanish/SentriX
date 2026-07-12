@@ -46,9 +46,6 @@ const clerkAppearance = {
     dividerLine: "bg-white/10",
     dividerText: "text-neutral-600",
     identityPreviewEditButton: "text-emerald-500",
-    userButtonPopoverCard: "bg-[#0a0a0a] border border-white/10",
-    userButtonPopoverActionButton: "text-neutral-300 hover:bg-white/5",
-    userButtonPopoverActionButtonText: "text-neutral-300",
     userButtonPopoverFooter: "hidden",
   },
 };
@@ -61,10 +58,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} dark antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
+      <body className="min-h-screen flex flex-col font-sans" suppressHydrationWarning>
         <ClerkProvider appearance={clerkAppearance}>
           <NavBar />
 

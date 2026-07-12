@@ -221,7 +221,7 @@ export default function PremiumDashboard() {
   const displaySteps = terminalSteps.length > 0 ? terminalSteps : defaultSteps;
 
   return (
-    <div className="w-full relative min-h-screen">
+    <div className="w-full relative">
       <ThreeBackground />
 
       {/* Storage Full Modal */}
@@ -500,8 +500,8 @@ export default function PremiumDashboard() {
                           transition={{ delay: idx * 0.06 }}
                           className={`flex items-center justify-between p-3 rounded-lg ${colors.bg} border ${colors.border}`}
                         >
-                          <div className={`flex items-center gap-2 ${colors.text} text-xs font-medium`}>
-                            <AlertTriangle className="w-3.5 h-3.5" /> {finding.name}
+                          <div className="flex items-center gap-2 text-neutral-200 text-xs font-medium">
+                            <AlertTriangle className={`w-3.5 h-3.5 ${colors.text}`} /> {finding.name}
                           </div>
                           <span className={`text-[10px] font-bold px-2 py-0.5 ${colors.badge} rounded`}>{finding.severity}</span>
                         </motion.div>
