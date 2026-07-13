@@ -1,11 +1,10 @@
 "use client";
 
-import { useUser, useClerk, UserButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, UserButton, useClerk } from "@clerk/nextjs";
 import Link from "next/link";
 import { Shield } from "lucide-react";
 
 export function NavBar() {
-  const { isSignedIn, isLoaded } = useUser();
   const { openSignIn, openSignUp } = useClerk();
 
   return (
@@ -34,25 +33,23 @@ export function NavBar() {
           </Link>
 
           <div className="pl-4 border-l border-white/10 flex items-center gap-3">
-            {isLoaded && !isSignedIn && (
-              <>
-                <button 
-                  onClick={() => openSignIn()}
-                  className="text-neutral-400 hover:text-white transition-colors text-sm"
-                >
-                  Sign In
-                </button>
-                <button 
-                  onClick={() => openSignUp()}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-lg font-bold text-sm transition-all hover:shadow-lg hover:shadow-emerald-900/30"
-                >
-                  Get Started
-                </button>
-              </>
-            )}
-            {isLoaded && isSignedIn && (
-              <UserButton />
-            )}
+            <SignedOut>
+              <button 
+                onClick={() => openSignIn()}
+                className="text-neutral-400 hover:text-white transition-colors text-sm"
+              >
+                Sign In
+              </button>
+              <button 
+                onClick={() => openSignUp()}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-lg font-bold text-sm transition-all hover:shadow-lg hover:shadow-emerald-900/30"
+              >
+                Get Started
+              </button>
+            </SignedOut>
+            <SignedIn>
+              <UserButton afterSignOutUrl="/" />
+            </SignedIn>
           </div>
         </div>
       </div>
