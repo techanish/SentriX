@@ -51,7 +51,7 @@ export function NavBar() {
               </>
             )}
             {isLoaded && isSignedIn && (
-              <UserButton afterSignOutUrl="/" />
+              <UserButton />
             )}
           </div>
         </div>
