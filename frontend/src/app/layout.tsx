@@ -39,7 +39,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-screen flex flex-col font-sans" suppressHydrationWarning>
-        <ClerkProvider appearance={clerkAppearance} afterSignOutUrl="/">
+        <ClerkProvider appearance={clerkAppearance}>
           <NavBar />
 
           <div className="flex-1">
