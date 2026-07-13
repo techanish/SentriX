@@ -12,7 +12,7 @@ type SettingsTab = "storage" | "api" | "danger";
 
 export default function SettingsPage() {
   const { user, isLoaded } = useUser();
-  const { signOut, openUserProfile } = useClerk();
+  const { signOut } = useClerk();
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<SettingsTab>("storage");
@@ -136,26 +136,11 @@ export default function SettingsPage() {
               <p className="font-bold text-sm truncate">{user.fullName || "SentriX Operator"}</p>
               <p className="text-xs text-neutral-500 truncate">{email}</p>
             </div>
-            <div className="text-right shrink-0 flex items-center gap-2">
-              <button 
-                onClick={() => openUserProfile()}
-                className="hidden sm:flex px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white text-xs font-bold transition-colors items-center gap-2"
-              >
-                <Settings className="w-3.5 h-3.5" /> Manage
-              </button>
-              <button 
-                onClick={async () => {
-                  try {
-                    await signOut();
-                    router.push('/');
-                  } catch (err) {
-                    console.error("Sign out failed", err);
-                  }
-                }}
-                className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 text-xs font-bold transition-colors flex items-center gap-2"
-              >
-                <LogOut className="w-3.5 h-3.5" /> Sign Out
-              </button>
+            <div className="text-right shrink-0">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-500 uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Active
+              </span>
             </div>
           </div>
         )}
