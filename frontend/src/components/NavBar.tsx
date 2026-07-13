@@ -1,11 +1,12 @@
 "use client";
 
-import { SignedIn, SignedOut, UserButton, useClerk } from "@clerk/nextjs";
+import { useUser, useClerk } from "@clerk/nextjs";
 import Link from "next/link";
 import { Shield } from "lucide-react";
 
 export function NavBar() {
-  const { openSignIn, openSignUp } = useClerk();
+  const { isSignedIn, isLoaded, user } = useUser();
+  const { openSignIn, openSignUp, signOut, openUserProfile } = useClerk();
 
   return (
     <nav className="w-full border-b border-white/5 bg-black/60 backdrop-blur-xl sticky top-0 z-40">
@@ -33,23 +34,46 @@ export function NavBar() {
           </Link>
 
           <div className="pl-4 border-l border-white/10 flex items-center gap-3">
-            <SignedOut>
-              <button 
-                onClick={() => openSignIn()}
-                className="text-neutral-400 hover:text-white transition-colors text-sm"
-              >
-                Sign In
-              </button>
-              <button 
-                onClick={() => openSignUp()}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-lg font-bold text-sm transition-all hover:shadow-lg hover:shadow-emerald-900/30"
-              >
-                Get Started
-              </button>
-            </SignedOut>
-            <SignedIn>
-              <UserButton afterSignOutUrl="/" />
-            </SignedIn>
+            {isLoaded && !isSignedIn && (
+              <>
+                <button 
+                  onClick={() => openSignIn()}
+                  className="text-neutral-400 hover:text-white transition-colors text-sm"
+                >
+                  Sign In
+                </button>
+                <button 
+                  onClick={() => openSignUp()}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-lg font-bold text-sm transition-all hover:shadow-lg hover:shadow-emerald-900/30"
+                >
+                  Get Started
+                </button>
+              </>
+            )}
+            {isLoaded && isSignedIn && (
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => openUserProfile()}
+                  className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center overflow-hidden border border-emerald-500/30 hover:border-emerald-500 transition-colors"
+                  title="Profile"
+                >
+                  {user?.imageUrl ? (
+                    <img src={user.imageUrl} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <Shield className="w-4 h-4 text-emerald-500" />
+                  )}
+                </button>
+                <button 
+                  onClick={async () => {
+                    await signOut();
+                    window.location.href = "/";
+                  }}
+                  className="text-neutral-500 hover:text-rose-400 transition-colors text-xs font-bold"
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
