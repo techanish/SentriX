@@ -149,7 +149,7 @@ Code to analyze:
         
         try:
             response = self.client.models.generate_content(
-                model='gemini-1.5-flash',
+                model='gemini-3.1-flash-lite',
                 contents=prompt,
                 config=types.GenerateContentConfig(temperature=0.1, response_mime_type="application/json")
             )
@@ -258,7 +258,7 @@ Code to analyze:
 
         try:
             response = self.client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3.1-flash-lite',
                 contents=prompt,
                 config=types.GenerateContentConfig(temperature=0.2, response_mime_type="application/json")
             )
@@ -408,7 +408,7 @@ Manifest files:
         
         try:
             response = self.client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3.1-flash-lite',
                 contents=prompt,
                 config=types.GenerateContentConfig(temperature=0.1, response_mime_type="application/json")
             )
