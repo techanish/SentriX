@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
-const API_BASE = process.env.NODE_ENV === "production" ? "/api/backend/api" : "http://localhost:8000/api";
+const API_BASE = process.env.NODE_ENV === "production" ? "/api" : "http://localhost:8000/api";
 
 type SettingsTab = "storage" | "api" | "danger";
 
