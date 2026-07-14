@@ -240,6 +240,17 @@ export default function PremiumDashboard() {
       setRiskState(calculateRisk(scanFindings));
       setScanStatus("done");
 
+      // Instantly update history
+      if (email) {
+        fetch(`${API_BASE}/history?user_email=${encodeURIComponent(email)}`)
+          .then(res => res.json())
+          .then(histData => {
+            if (histData.reports) setHistory(histData.reports);
+            else if (histData.history) setHistory(histData.history);
+          })
+          .catch(() => {});
+      }
+
     } catch (err: any) {
       console.error("Scan failed:", err);
       setScanError(err.message || "Failed to connect to backend");
@@ -648,7 +659,7 @@ export default function PremiumDashboard() {
                       </button>
                       <div className="relative">
                         <button 
-                          onClick={(e) => { e.stopPropagation(); setOpenDropdownId(openDropdownId === report._id ? null : report._id); }} 
+                          onClick={(e) => { e.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); setOpenDropdownId(openDropdownId === report._id ? null : report._id); }} 
                           className="text-neutral-600 hover:text-white p-1 -mr-1 transition-colors"
                           title="Options"
                         >
