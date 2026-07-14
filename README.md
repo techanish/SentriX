@@ -1,7 +1,7 @@
 <div align="center">
-  <img src="frontend/public/logo.png" width="180" alt="SentriX AI Logo" />
+  <img src="frontend/public/SentriX.png" width="180" alt="SentriX AI Logo" />
   
-# SentriX AI
+
 **The Autonomous AI Security Engineer for Modern Codebases**
 
 [![Built with React](https://img.shields.io/badge/Built_with-React_18-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org/)
