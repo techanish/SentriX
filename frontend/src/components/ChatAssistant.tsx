@@ -31,7 +31,7 @@ export function ChatAssistant() {
     setMessages(prev => [...prev, { id: loadingId, role: "assistant", content: "..." }]);
 
     try {
-      const apiBase = process.env.NODE_ENV === "production" ? "/api/backend/api" : "http://127.0.0.1:8000/api";
+      const apiBase = process.env.NODE_ENV === "production" ? "/api" : "http://127.0.0.1:8000/api";
       const res = await fetch(`${apiBase}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
