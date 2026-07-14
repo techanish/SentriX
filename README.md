@@ -1,76 +1,49 @@
 # SentriX AI
 
 **Autonomous AI Security Engineer**
-Powered by Google Gemini + Vertex AI Agent Engine
+Powered by Google Gemini 3.1 Flash Lite + Advanced Agent Swarm
+
+---
 
 ## Vision
 
-Imagine every GitHub repository having a dedicated Security Engineer who:
-- Reviews every commit
-- Understands the architecture
-- Finds vulnerabilities
-- Explains risks
-- Writes secure code
-- Creates pull requests
-- Learns the team's coding style
-- Continuously monitors the project
+Imagine every codebase having a dedicated, hyper-vigilant Security Engineer who:
+- Maps out your entire project architecture instantly.
+- Uncovers deep-rooted vulnerabilities across dependencies, secrets, and core logic.
+- Speaks directly with your developers to explain security risks in plain English.
+- Autonomously generates secure, drop-in replacement code patches for critical flaws.
 
-SentriX AI is that engineer.
+SentriX AI is that engineer. It doesn't just alert you to vulnerabilities; it actively fixes them.
 
-## Architecture
+## The Agent Swarm Architecture
 
-The system consists of a multi-agent AI team orchestrated by the **Planner Agent**.
+The core of SentriX AI is driven by a specialized multi-agent swarm architecture. Instead of a monolithic analysis pass, specialized AI personas tackle different attack vectors:
 
-*   **Planner Agent:** Decides the analysis strategy.
-*   **Repository Agent:** Understands project architecture.
-*   **Secret Agent:** Finds exposed secrets.
-*   **Dependency Agent:** Reviews third-party packages.
-*   **Code Review Agent:** Detects insecure code.
-*   **Cloud Agent:** Reviews cloud configuration.
-*   **Docker Agent:** Audits containers.
-*   **CI/CD Agent:** Reviews GitHub Actions and pipelines.
-*   **Risk Agent:** Correlates findings and prioritizes risks.
-*   **Fix Agent:** Generates secure code patches.
-*   **Validation Agent:** Confirms fixes resolve the issue.
-*   **Report Agent:** Creates executive and technical reports.
-*   **Chat Agent:** Answers developer questions.
+*   **Secret Agent:** Deep-scans code and configuration files for exposed API keys, database credentials, and hardcoded JWT secrets.
+*   **Dependency Agent:** Cross-references `package.json`, `requirements.txt`, and other manifests against known CVE databases to flag vulnerable or abandoned libraries.
+*   **Code Review Agent:** Performs Static Application Security Testing (SAST) to uncover injection flaws (SQLi, XSS, Command Injection), insecure deserialization, weak cryptography, and SSRF vulnerabilities.
 
-## Tech Stack
+## Core Platform Features
 
-- **Frontend:** Next.js, React, Tailwind CSS, ShadCN UI, Monaco Editor, Framer Motion
-- **Backend:** FastAPI, Python, Celery, Redis
-- **AI:** Gemini 2.5 Pro, Vertex AI Agent Engine
-- **Cloud:** Google Cloud (Firebase, Cloud Run, Secret Manager)
-- **Security Tools:** Semgrep, Gitleaks, Trivy, OSV Scanner, npm audit, pip-audit, Checkov, Bandit
+### Instant Vulnerability Mapping
+Paste any public repository URL into the SentriX engine. The swarm will immediately download, parse, and analyze the codebase, surfacing a prioritized list of critical, high, medium, and low risks.
 
-## Setup
+### AI Patch Generation
+Stop writing boilerplate fixes. The Vulnerability Explorer allows you to instantly generate secure, drop-in replacement patches using the **Gemini 3.1 Flash Lite** engine. Click a button, wait three seconds, and copy your secured code block.
 
-1. Start the local infrastructure (Redis): `docker-compose up -d`
-2. Run backend: `cd backend && uvicorn main:app --reload`
-3. Run Celery: `cd backend && celery -A workers.tasks worker --loglevel=info`
-4. Run frontend: `cd frontend && npm run dev`
+### Interactive Security Assistant
+Every scan comes paired with the SentriX Chat Agent. Don't understand why an MD5 hash is vulnerable? Just open the chat and ask the agent to explain the attack vector and how to resolve it in your specific language.
 
+### Secure Storage Containers
+Every user account receives a sandboxed, isolated storage container backed by MongoDB. Scan histories are securely encrypted and capped to ensure data freshness. Users have complete, autonomous control over their data footprint via the **Danger Zone** settings, allowing one-click data purges and account deletion.
 
-## Enterprise Architecture Updates
-- Add architecture overview to docs
-- Document NextAuth integration steps
-- Explain MongoDB container limits
-- Document OAuth environment variables
-- Detail the 10-report storage cap
-- Explain data purging in settings
-- Document the GET /history endpoint
-- Document the POST /scan payload updates
-- Detail the frontend middleware logic
-- Explain the protected route redirects
-- Document GitHub SSO configuration
-- Document Google SSO configuration
-- Explain MongoDB unique indexing on emails
-- Document the DELETE /settings/data route
-- Document the DELETE /settings/account route
-- Explain JSON serialization stripping for MongoDB
-- Add troubleshooting for Vercel builds
-- Document Lucide SVG inline replacements
-- Explain the global layout persistence
-- Document the dark mode typography plugin
-- Add developer attribution details
-- Finalize enterprise documentation layout
+## Technology Stack
+
+- **Frontend:** Next.js (App Router), React 18, Tailwind CSS, Framer Motion, Monaco Editor, Clerk Auth
+- **Backend:** Flask, Python 3, Gunicorn
+- **Database:** MongoDB (Motor Async)
+- **AI Engine:** Google Gemini (Generative Language API)
+
+---
+
+*© 2026 SentriX AI. All Rights Reserved. This is a proprietary, closed-source security platform.*
