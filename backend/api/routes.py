@@ -278,7 +278,7 @@ FILE CONTENT:
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
             "systemInstruction": {"parts": [{"text": "You are a code patch generator. Output ONLY raw code, no markdown blocks, no explanations."}]}
         }
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
         headers = {"Content-Type": "application/json"}
         resp = requests.post(url, json=payload, headers=headers, timeout=20)
         
