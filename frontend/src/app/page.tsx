@@ -8,7 +8,7 @@ import { ThreeBackground } from "@/components/ThreeBackground";
 import { useState, useEffect, useCallback } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
 
-const API_BASE = process.env.NODE_ENV === "production" ? "/api" : "http://localhost:8000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
 type ScanStatus = "idle" | "scanning" | "done" | "error";
 
