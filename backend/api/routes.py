@@ -217,9 +217,9 @@ def chat():
         
     try:
         import requests
-        api_key = os.environ.get("GEMINI_API_KEY")
+        api_key = data.get("api_key") or os.environ.get("GEMINI_API_KEY")
         if not api_key:
-            response_text = "ERROR: System API key missing. The node is offline."
+            response_text = "ERROR: System API key missing. Please add your Gemini API Key in Settings."
         else:
             payload = {
                 "contents": [{"role": "user", "parts": [{"text": message}]}],
@@ -250,7 +250,7 @@ def generate_patch():
     if not file_content or not vuln:
         return jsonify({"error": "file_content and vulnerability are required"}), 400
         
-    api_key = os.environ.get("GEMINI_API_KEY")
+    api_key = data.get("api_key") or os.environ.get("GEMINI_API_KEY")
     if not api_key:
         return jsonify({"error": "System API key missing. Cannot generate patch."}), 500
         

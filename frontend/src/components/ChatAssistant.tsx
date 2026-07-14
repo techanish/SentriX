@@ -31,11 +31,15 @@ export function ChatAssistant() {
     setMessages(prev => [...prev, { id: loadingId, role: "assistant", content: "..." }]);
 
     try {
+      const userApiKey = localStorage.getItem("sentrix_gemini_key") || undefined;
       const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
       const res = await fetch(`${apiBase}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input })
+        body: JSON.stringify({ 
+          message: input,
+          api_key: userApiKey
+        })
       });
       const data = await res.json();
       
