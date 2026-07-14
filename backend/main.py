@@ -13,5 +13,8 @@ get_db()
 app.register_blueprint(api_bp, url_prefix='/api')
 app.register_blueprint(api_bp, url_prefix='/api/backend/api', name='api_vercel')
 
+import os
+
 if __name__ == "__main__":
-    app.run(port=8000, debug=True)
+    port = int(os.environ.get("PORT", 8000))
+    app.run(host="0.0.0.0", port=port, debug=False)

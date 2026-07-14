@@ -7,3 +7,4 @@ google-genai
 pymongo
 g4f
 requests
+gunicorn
