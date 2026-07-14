@@ -13,7 +13,7 @@ export function NavBar() {
       <div className="max-w-7xl mx-auto px-6 sm:px-8 py-3.5 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2.5 group">
           <div className="relative">
-            <Shield className="w-6 h-6 text-emerald-500 transition-transform group-hover:scale-110" />
+            <img src="/logo.png" alt="SentriX AI" className="w-8 h-8 object-contain transition-transform group-hover:scale-110" />
             <div className="absolute inset-0 bg-emerald-500/20 blur-lg rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
           <span className="text-lg font-black tracking-tight">

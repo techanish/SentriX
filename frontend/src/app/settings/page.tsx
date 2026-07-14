@@ -103,7 +103,7 @@ export default function SettingsPage() {
     return (
       <div className="max-w-4xl mx-auto px-8 py-24 text-center">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <Shield className="w-16 h-16 text-neutral-700 mx-auto" />
+          <img src="/logo.png" alt="SentriX AI" className="w-20 h-20 object-contain mx-auto opacity-50 grayscale transition-all hover:grayscale-0 hover:opacity-100" />
           <h1 className="text-3xl font-black tracking-tight">Authentication Required</h1>
           <p className="text-neutral-500 text-sm max-w-md mx-auto">
             Sign in to access your SentriX settings, manage your storage container, and configure your API keys.

@@ -7,7 +7,7 @@ export default function SignInPage() {
       <div className="flex flex-col items-center gap-8">
         <div className="text-center space-y-3">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <Shield className="w-8 h-8 text-emerald-500" />
+            <img src="/logo.png" alt="SentriX AI" className="w-10 h-10 object-contain drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]" />
             <span className="text-2xl font-black tracking-tight">
               Sentri<span className="text-emerald-500">X</span>
             </span>
