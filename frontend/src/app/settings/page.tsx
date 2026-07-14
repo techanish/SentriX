@@ -17,6 +17,7 @@ export default function SettingsPage() {
 
   const [activeTab, setActiveTab] = useState<SettingsTab>("storage");
   const [apiKey, setApiKey] = useState("");
+  const [isKeyLocked, setIsKeyLocked] = useState(false);
   const [apiKeySaved, setApiKeySaved] = useState(false);
   const [isDeletingData, setIsDeletingData] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
@@ -43,13 +44,24 @@ export default function SettingsPage() {
     if (apiKey.trim()) {
       localStorage.setItem("sentrix_gemini_key", apiKey.trim());
       setApiKeySaved(true);
+      setIsKeyLocked(true);
       setTimeout(() => setApiKeySaved(false), 2000);
     }
   };
 
+  const handleDeleteApiKey = () => {
+    localStorage.removeItem("sentrix_gemini_key");
+    setApiKey("");
+    setIsKeyLocked(false);
+    setApiKeySaved(false);
+  };
+
   useEffect(() => {
     const savedKey = localStorage.getItem("sentrix_gemini_key");
-    if (savedKey) setApiKey(savedKey);
+    if (savedKey) {
+      setApiKey(savedKey);
+      setIsKeyLocked(true);
+    }
   }, []);
 
   const handleDeleteData = async () => {
@@ -249,17 +261,33 @@ export default function SettingsPage() {
                       <div className="flex gap-2">
                         <input
                           type="password"
-                          value={apiKey}
-                          onChange={(e) => setApiKey(e.target.value)}
-                          placeholder="AQ.Ab8R..."
-                          className="flex-1 bg-white/[0.02] border border-white/[0.08] rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50 transition font-mono"
+                          value={isKeyLocked ? "••••••••••••••••••••••••••••••••••••••••" : apiKey}
+                          onChange={(e) => {
+                            // Only allow changing if it's not locked
+                            if (!isKeyLocked) {
+                              setApiKey(e.target.value);
+                            }
+                          }}
+                          placeholder="Paste Gemini API Key here..."
+                          disabled={isKeyLocked}
+                          className="flex-1 bg-white/[0.02] border border-white/[0.08] rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50 transition font-mono disabled:opacity-50 disabled:cursor-not-allowed"
                         />
-                        <button
-                          onClick={handleSaveApiKey}
-                          className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-bold text-sm transition-all"
-                        >
-                          {apiKeySaved ? "Saved ✓" : "Save"}
-                        </button>
+                        {!isKeyLocked ? (
+                          <button
+                            onClick={handleSaveApiKey}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-bold text-sm transition-all"
+                          >
+                            {apiKeySaved ? "Saved ✓" : "Save"}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleDeleteApiKey}
+                            className="bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Delete
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
