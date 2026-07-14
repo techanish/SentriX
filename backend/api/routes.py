@@ -240,6 +240,63 @@ def chat():
 
     return jsonify({"response": response_text})
 
+@api_bp.route("/patch", methods=["POST"])
+def generate_patch():
+    data = request.get_json()
+    file_content = data.get("file_content")
+    vuln = data.get("vulnerability")
+    language = data.get("language", "plaintext")
+    
+    if not file_content or not vuln:
+        return jsonify({"error": "file_content and vulnerability are required"}), 400
+        
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return jsonify({"error": "System API key missing. Cannot generate patch."}), 500
+        
+    prompt = f"""You are an elite Security Engineer. Your task is to fix a security vulnerability in the following {language} code.
+
+VULNERABILITY DETAILS:
+Name: {vuln.get('name')}
+Severity: {vuln.get('severity')}
+Description: {vuln.get('description')}
+Affected Lines: {vuln.get('lineStart')} to {vuln.get('lineEnd')}
+
+INSTRUCTIONS:
+1. Analyze the file content and the specific vulnerable lines.
+2. Generate the secure, patched version of the code that fixes the vulnerability.
+3. Return ONLY the patched code block (e.g. the fixed function, class, or lines). Do NOT return the entire file if it is huge, but provide enough context so the user can easily drop it in.
+4. DO NOT wrap the output in markdown code blocks (e.g. no ```python). Return raw code.
+5. Do NOT include explanations, just the raw patched code.
+
+FILE CONTENT:
+{file_content}"""
+
+    try:
+        import requests
+        payload = {
+            "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+            "systemInstruction": {"parts": [{"text": "You are a code patch generator. Output ONLY raw code, no markdown blocks, no explanations."}]}
+        }
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        headers = {"Content-Type": "application/json"}
+        resp = requests.post(url, json=payload, headers=headers, timeout=20)
+        
+        if resp.status_code == 200:
+            resp_data = resp.json()
+            patch_code = resp_data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+            # Clean up potential markdown blocks if Gemini disobeys
+            if patch_code.startswith("```"):
+                patch_code = patch_code.split("\n", 1)[-1]
+                if patch_code.endswith("```"):
+                    patch_code = patch_code[:-3]
+            return jsonify({"patch": patch_code.strip()})
+        else:
+            return jsonify({"error": f"Failed to generate patch. API returned {resp.status_code}"}), 500
+    except Exception as e:
+        logger.error(f"Patch generation failed: {e}")
+        return jsonify({"error": "Failed to connect to AI engine."}), 500
+
 #  Optimized execution pass 1 for update_jwt_session_strategy_enforcement
 
 #  Optimized execution pass 6 for refactor_storage_limit_threshold_checks
